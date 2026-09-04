@@ -1,0 +1,11 @@
+.DS_Store
+.claude/
+
+# рабочие файлы, к запуску сайта отношения не имеют
+Prompt*
+shelf-bg-example.png
+shelf.jpg
+shelf2.jpg
+vinyl.jpg
+logo.svg
+istockphoto-*.jpg

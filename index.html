@@ -1,0 +1,1738 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>I See You — Uprooted, 2026</title>
+
+  <link rel="preload" href="PontiffWide.otf" as="font" type="font/otf" crossorigin>
+
+  <style>
+    /* марка набрана вложенным файлом: сеть для страницы больше не нужна.
+       Имя файла — с заглавной P: на регистрозависимом сервере строчная даст 404 */
+    @font-face {
+      font-family: "PontiffWide";
+      src: url("PontiffWide.otf") format("opentype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #F7FBFF;
+      --navy: #1D2A57;
+      --red: #FC2234;
+      --orange: #de9143;
+      --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --serif: "PontiffWide", Georgia, serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg)
+    }
+
+    body {
+      font-family: var(--mono);
+      color: var(--navy);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    canvas#stage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    canvas#stage.dragging {
+      cursor: grabbing
+    }
+
+    canvas#stage.over-sleeve {
+      cursor: pointer
+    }
+
+    body.viewing canvas#stage {
+      cursor: default
+    }
+
+    .mono {
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    /* ---------- шапка ---------- */
+
+    /* ---------- вступление: полка ---------- */
+
+    :root {
+      /* доля ширины окна под саму мебель */
+      --shelf-w: 50;
+      /* доля непрозрачного содержимого в картинке: по краям у неё прозрачные поля,
+         и без поправки мебель вышла бы мельче заказанного */
+      --shelf-fill: 0.812;
+      /* прозрачный запас снизу — на него картинку опускаем, чтобы ножки встали на край окна */
+      --shelf-foot: 0%;
+    }
+
+    @media (orientation:portrait) {
+      :root {
+        --shelf-w: 85
+      }
+    }
+
+    .shelf {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 30;
+      width: calc(var(--shelf-w) * 1% / var(--shelf-fill));
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      opacity: 0;
+      transform: translate(-50%, 22px);
+      transition: opacity .9s ease, transform .9s cubic-bezier(.2, .7, .3, 1);
+    }
+
+    .shelf img {
+      display: block;
+      width: 100%;
+      transform: translateY(var(--shelf-foot));
+      pointer-events: none;
+    }
+
+    body.ready .shelf {
+      opacity: 1;
+      transform: translate(-50%, 0)
+    }
+
+    /* уход полки быстрее прихода: она освобождает кадр под веер */
+    body.entering .shelf {
+      opacity: 0;
+      transform: translate(-50%, 26px);
+      transition-duration: .55s;
+      pointer-events: none
+    }
+
+    .shelf:focus-visible {
+      outline: 2px solid var(--red);
+      outline-offset: 8px;
+      border-radius: 4px
+    }
+
+    header {
+      opacity: 0;
+      transition: opacity .9s ease;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: start;
+      gap: 24px;
+      padding: 26px 32px;
+      pointer-events: none;
+    }
+
+    header>* {
+      pointer-events: auto
+    }
+
+    .h-note {
+      max-width: 22ch
+    }
+
+    /* подпись справа — внешняя ссылка, ведёт себя кнопкой:
+       палец на курсоре, отклик на наведение, своё кольцо фокуса */
+    .h-sign {
+      justify-self: end;
+      text-align: right;
+      max-width: 22ch;
+      color: var(--navy);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color .18s ease;
+    }
+
+    .h-sign:hover {
+      color: var(--red);
+      text-decoration: underline;
+      text-underline-offset: 5px;
+      text-decoration-thickness: 1px;
+    }
+
+    .h-sign:focus-visible {
+      color: var(--red);
+      outline: 2px solid var(--red);
+      outline-offset: 5px;
+    }
+
+    .logo {
+      width: 200px;
+      height: 20px;
+      background-image: url('logo.svg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      color: var(--red);
+    }
+
+    .brand {
+      font-family: var(--serif);
+      text-transform: uppercase;
+      font-size: 30px;
+      line-height: 1;
+      color: var(--navy);
+      letter-spacing: .005em;
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+
+    /* ---------- точки ---------- */
+
+    nav.dots {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      transition: opacity .35s ease, visibility .35s;
+    }
+
+    body.ready header {
+      opacity: 1
+    }
+
+    /* пока показана полка, пластинок нет — и точек, которые их считают, тоже */
+    body.intro nav.dots,
+    body.viewing nav.dots {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none
+    }
+
+    nav.dots a {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      text-decoration: none;
+      outline: none;
+    }
+
+    nav.dots a::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--navy);
+      opacity: .32;
+      transition: opacity .2s ease, background-color .2s ease;
+    }
+
+    nav.dots a:hover::after {
+      opacity: .7
+    }
+
+    nav.dots a[aria-current="true"] {
+      box-shadow: inset 0 0 0 1px var(--navy)
+    }
+
+    nav.dots a[aria-current="true"]::after {
+      opacity: 1;
+      background: var(--navy)
+    }
+
+    nav.dots a:focus-visible {
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--red)
+    }
+
+    /* ---------- карточка ---------- */
+
+    .card {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+
+    body.viewing .card {
+      opacity: 1
+    }
+
+    .card>* {
+      pointer-events: auto
+    }
+
+    .card:focus {
+      outline: none
+    }
+
+    .card-cols {
+      position: absolute;
+      left: 40%;
+      right: 6%;
+      top: 33%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: 44px;
+      transform: translateY(14px);
+      transition: transform .45s cubic-bezier(.2, .7, .3, 1), opacity .45s ease;
+      opacity: 0;
+    }
+
+    body.viewing .card-cols {
+      transform: none;
+      opacity: 1
+    }
+
+    .r-title {
+      font-family: var(--sans);
+      font-weight: 800;
+      font-size: clamp(30px, 3.2vw, 46px);
+      line-height: 1.02;
+      letter-spacing: -.02em;
+      color: var(--navy);
+      text-wrap: balance;
+    }
+
+    .r-artist {
+      margin-top: 14px
+    }
+
+    .r-desc {
+      margin-top: 18px;
+      max-width: 34ch;
+      text-transform: none;
+      letter-spacing: .02em;
+      line-height: 1.85
+    }
+
+    .back {
+      display: inline-block;
+      margin-top: 64px;
+      font-size: 26px;
+      line-height: 1;
+      color: var(--navy);
+      text-decoration: none;
+      background: none;
+      border: 0;
+      cursor: pointer;
+      padding: 6px 10px 6px 0;
+      font-family: var(--mono);
+    }
+
+    .back:hover {
+      color: var(--red)
+    }
+
+    .back:focus-visible {
+      outline: 2px solid var(--red);
+      outline-offset: 3px
+    }
+
+    /* длинный текст: описание или слова песни.
+       pre-line — перевод строки виден, пустая строка разбивает на строфы */
+    .lyrics {
+      white-space: pre-line;
+      text-transform: none;
+      letter-spacing: .02em;
+      line-height: 2;
+      max-height: 46vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 16px;
+    }
+
+    /* На широком экране ссылку держит подпись в шапке, здесь она не нужна.
+       Показывается ровно по тому же порогу, по которому шапочная прячется, —
+       иначе в узком горизонтальном окне не осталось бы ни одной. */
+    .card-listen {
+      display: none
+    }
+
+    .lyrics::-webkit-scrollbar {
+      width: 2px
+    }
+
+    .lyrics::-webkit-scrollbar-thumb {
+      background: var(--navy);
+      opacity: .3
+    }
+
+    /* ---------- узкий экран ---------- */
+
+    @media (max-width:900px) {
+      header {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding: 20px
+      }
+
+      .h-note,
+      .h-sign {
+        display: none
+      }
+
+      .brand {
+        font-size: 30px
+      }
+
+      nav.dots {
+        gap: 8px;
+        bottom: 20px
+      }
+
+      nav.dots a {
+        width: 16px;
+        height: 16px
+      }
+
+      .card-cols {
+        left: 0;
+        right: 0;
+        top: auto;
+        bottom: 0;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        padding: 22px 22px calc(22px + env(safe-area-inset-bottom));
+        background: var(--bg);
+        box-shadow: 0 -24px 30px 10px var(--bg);
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+
+      /* самый низ шторки: короткая черта, под ней ссылка */
+      .card-listen {
+        display: block;
+        position: relative;
+        margin-top: 26px;
+        padding-top: 18px;
+        color: var(--navy);
+        text-decoration: none;
+        cursor: pointer;
+        transition: color .18s ease;
+      }
+
+      .card-listen::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 44px;
+        height: 1px;
+        background: var(--navy)
+      }
+
+      .card-listen:hover {
+        color: var(--red);
+        text-decoration: underline;
+        text-underline-offset: 5px;
+        text-decoration-thickness: 1px
+      }
+
+      .card-listen:focus-visible {
+        color: var(--red);
+        outline: 2px solid var(--red);
+        outline-offset: 4px;
+        text-decoration: none
+      }
+
+      .r-title {
+        font-size: 28px
+      }
+
+      .r-desc {
+        max-width: none;
+        margin-top: 14px
+      }
+
+      .r-artist {
+        margin-top: 10px
+      }
+
+      .back {
+        margin-top: 18px
+      }
+
+      /* внутри шторки прокрутка одна — своей у текста быть не должно */
+      .lyrics {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+        line-height: 1.9
+      }
+    }
+
+    /* ---------- запасная сетка ---------- */
+
+    .fallback {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: var(--bg);
+      overflow: auto;
+      padding: 32px;
+      display: none
+    }
+
+    .fallback.on {
+      display: block
+    }
+
+    .fallback p {
+      max-width: 60ch;
+      margin-bottom: 26px;
+      line-height: 1.8
+    }
+
+    .fallback code {
+      font-family: var(--mono);
+      color: var(--red)
+    }
+
+    .fb-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 22px
+    }
+
+    .fb-grid figure img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      display: block;
+      background: #D4E0EA
+    }
+
+    .fb-grid figcaption {
+      margin-top: 10px
+    }
+
+    /* ---------- служебное ---------- */
+
+    .vh {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+
+      *,
+      *::before,
+      *::after {
+        transition-duration: 1ms !important
+      }
+    }
+  </style>
+</head>
+
+<body class="intro">
+
+  <canvas id="stage" aria-hidden="true"></canvas>
+
+  <header>
+    <div class="h-note mono" id="h-note"></div>
+    <div class="brand" id="h-brand"></div>
+    <a class="h-sign mono" id="h-sign" target="_blank" rel="noopener noreferrer"></a>
+  </header>
+
+  <button class="shelf" id="shelf" aria-label="Open the collection">
+    <img src="shelf-bg.png" alt="A turntable and a shelf of records" decoding="async">
+  </button>
+
+  <nav class="dots" id="dots" aria-label="Releases"></nav>
+
+  <div class="card" id="card" role="dialog" aria-modal="true" aria-label="Release" tabindex="-1" aria-hidden="true">
+    <div class="card-cols">
+      <div>
+        <h1 class="r-title" id="c-title"></h1>
+        <p class="r-artist mono" id="c-artist"></p>
+        <p class="r-desc mono" id="c-desc"></p>
+        <button class="back" id="c-back" aria-label="Back to collection">&larr;</button>
+      </div>
+      <div>
+        <div class="lyrics mono" id="c-text" tabindex="0"></div>
+        <a class="card-listen mono" id="c-listen" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="fallback" id="fallback">
+    <p class="mono" id="fb-why"></p>
+    <div class="fb-grid" id="fb-grid"></div>
+  </div>
+
+  <p class="vh" id="live" role="status" aria-live="polite"></p>
+  <section class="vh" id="catalog" aria-label="Collection"></section>
+
+  <script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+
+  <script type="module">
+    import * as THREE from 'three'
+
+    /* ============================================================
+       каталог
+       ============================================================ */
+
+    const TEXT_STUB_1 = `1. Station: Den Haag Centraal - 2:37
+                        2. Moving Storms - 3:22
+                        3. Higher - 4:21
+                        4. Sorry, It’s Too Quiet - 5:26
+                        5. In Mijn Hoofd - 8:10
+                        6. Station: Coolhaven - 2:57
+                        7. Alles Goed - 5:09
+                        8. Rewind - 3:08
+                        9. Done - 5:46
+                        10. Station: Hoek van Holland Haven - 1:28
+                        11. Stay with Me - 3:37
+                        12. Terracotta Army - 4:22
+                        13. Let’s Take a Ride in This Burning Car - 4:57
+                        14. Away - 5:09`
+    const TEXT_STUB_MS = `The wind from old Maas
+                        Has thrown in the past
+                        My body remembers those pulses much better than brain
+
+                        I march on with ease
+                        My breath is in peace
+                        My limbic feels safe, so I keep warm despite heavy rain
+
+                        The first - day alarm
+                        Like Pilgrims walk down
+                        We've landed in places all known from the pale TV frame
+
+                        Unraveled map voids
+                        Have stopped the deep noise
+                        How long will it take to anxiety flare up the same
+
+                        No fight
+                        No flight
+                        No freeze
+                        There's nothing to be scared
+
+                        I'm here
+                        I'm not
+                        Am I asleep or dead
+
+                        No storm anymore
+                        No storm anymore
+                        More
+                        More
+                        More
+                        More
+                        More`
+    const TEXT_STUB_AG = `Everything
+                          Everything goes right
+                          Own your win
+                          Shine with all your light
+
+                          You can get the best
+                          Feathering your nest
+                          Ram the bus take the class
+                          Make a fuss in the mass
+                          Wreck it all and gas
+
+                          Alles goed all is fine
+                          Wipe the blood off the sign
+                          Grow a spine hold the line
+                          Leave your name in the pine
+                          Stop the fight know your role
+                          Lull and cradle your fears
+                          Clamp the leak in your soul
+                          Let it drip through the years
+
+                          Alles goed
+
+                          Same routine same routine same routine – you have been
+                          Lights are green lights are green lights are green — you have seen
+                          All day's clean all day's clean all day's clean — shed your skin
+                          Kill your twin kill your twin kill your twin — you're back in
+
+                          Alles goed all is fine
+                          Life's complete redesign
+                          Rearrange reassign
+                          Melt the rules you define
+                          You were flung you were sold
+                          Put ambitions on hold
+                          The hot fix is to mix
+                          With the brave fucking world
+
+                          Pack your worn-out face
+                          Wrap your hopes and needs
+                          Put them in a case
+                          Lock it lose the keys
+
+                          Cut your power off
+                          Take your last exhale
+                          Lay down in your hole
+                          Spin a fairy tale
+
+                          Cheat code loaded
+                          Cheat code loaded
+                          Cheat code loaded
+                          Cheat code loaded
+                          Cheat code loaded
+                          Cheat code loaded
+                          Meet your tale sweet tale
+
+                          Alles goed
+                          Plant there a pink flag
+                          Alles goed
+                          Plant there a pink flag`
+    const TEXT_STUB_D = `My shadow was born the night she leaned on the frame
+                          Then i spent every breath throwing back her mistake
+                          And i keep spinning the dream watching haze corrode my lungs
+                          I keep spilling my guts shutting up their mouths
+
+                          You saw i leapt over heights just to feel i'm alive
+                          (The body beats in the wind, not yet gone and not arrived)
+                          I've noticed too late the void left no face in the glass
+                          (The body nailed to the frame in the fall aftermath)
+
+                          So you can fasten me, can ration me, can grind through my bones
+                          Pretending i'm the rusted wire, repeating lines i don't own
+                          And you can fracture me, can shatter me, assault and burn, erasing me
+                          Until you hear the tiny voice that keeps repeating through the noise
+
+                          I'm done
+                          Done
+
+                          Let's say the monkey was right after all
+                          They live in us, so we pass on and keep carrying glow
+                          So there is something inside always turning on us
+                          They call it genes — hidden scenes, wash it all in old Maas
+
+                          And you were so upset, you had no strength to argue or shout
+                          You were so deep in love, the only way was choking me out
+                          But i've been wandering the city like a hunter-gatherer
+                          I needed something, something, something
+                          Something to complete what's left in me undone
+
+                          Damn
+                          The whole new town
+                          With glass and steel
+                          Was built to heal
+                          It seemed so real
+                          It felt so real
+                          I turn the wheel, a hamster wheel — a wheel, a wheel, a wheel
+                          Until i'm
+
+                          Done
+                          Done
+
+                          Upon your trail i run
+                          Denying all's done
+
+                          Break me out (the nightmare)
+                          Take her off (the ledge)
+                          Upon her trail i run
+                          The ups and downs, the ups and downs, the downs, the downs, i drown
+
+                          Your tame, no blame. How i wish i had left the war
+                          Cleared my name, all the shame, and the code i swore
+                          I was slamming the frame in the empty room
+                          When your eyes caught the glare of the foreign gloom
+
+                          Came right from (the nightmare)
+                          Leading to (the ledge)
+                          Upon her trail
+                          ()
+
+                          Wear the smiling face
+                          Lie to hold the place
+                          Don't disturb the fate
+                          Hide your pain and hate
+
+                          Hide your hate and pain
+                          Don't disturb the fate
+                          Lie to hold the place`
+    const TEXT_STUB_TA = `The terracotta army's motion
+                          The door is torn in bare emotion
+                          Neurosis grounded into raw affect
+
+                          The lungs and bones under corrosion
+                          You hear Sheikh's garden through the ocean
+                          The magic carpet folds in desert
+                          When Zappa riffs have turned unpleasant
+
+                          Wane of the Rochussen creation
+                          So, will'em redefine narration?
+                          The echo flows along the station
+                          Haven stay, Coolhaven station
+
+                          Homes and fields
+                          Homes and fields
+
+                          Vibrations fall across the marble
+                          They bind the forms and calm the struggle
+                          Obsession pulls the fragments into place
+
+                          The nothingness has shown its power
+                          No Euromast, no TV tower
+                          The light is trapped in depth of glazing
+                          The silence shines, the stillness blazing
+
+                          Control creates a sense of order
+                          Precision builds a fragile border
+                          Constructing self by calculation
+                          In relation, irrelation
+
+                          Homes and fields
+                          Homes and fields
+
+                          Control reveals the inner warder
+                          The missing crowd provokes disorder
+                          The final stroke of disconnection
+                          The marble holds your name's reflection
+
+                          The terracotta army's motion
+                          The canvas frames preserve the notion
+                          The halls are void but never empty
+
+                          Never empty, never empty`
+
+    const RELEASES = [
+      {
+        title: 'Uprooted', artist: 'I See You',
+        sleeve: '--orange', ink: '--navy',
+        description: 'First pressing on orange stock, cut in 2024. Remastered from the original session tapes.',
+        text: TEXT_STUB_1
+      },
+
+      {
+        title: 'Higher', artist: '2025',
+        description: 'A black and white single recorded over two nights. Three hundred copies, hand numbered.',
+      },
+
+      {
+        title: 'Number Nine', artist: '2025',
+        description: 'A red door and a reflection in glass. The whole record was shot in one block, in one day.',
+      },
+
+      {
+        title: 'Done', artist: '2025',
+        description: 'The darkest thing the band has put out. One microphone, one room, no mixing desk.',
+        text: TEXT_STUB_D
+      },
+
+      {
+        title: 'Terracotta Army', artist: '2025',
+        description: 'Home recordings made in an empty flat, where only the clay soldier was left behind.',
+        text: TEXT_STUB_TA
+      },
+
+      {
+        title: 'Let’s Take a Ride in This Burning Car', artist: '2025',
+        description: 'Gatefold sleeve, collaged from found photographs. The loudest side B in the catalogue.',
+      },
+
+      {
+        title: 'Alles Goed', artist: '2025',
+        description: 'A winter record mixed in Rotterdam. The tram on the cover runs the line past the studio.',
+        text: TEXT_STUB_AG
+      },
+
+      {
+        title: 'Stay With Me', artist: '2025',
+        description: 'Pink and yellow collage, and the most direct pop the band has written. Sold out in a week.',
+      },
+
+      {
+        title: 'Uprooted', artist: '2024, Single',
+        description: 'A sequel to the first record, written in motion: trains, stations, rooms rented by the week.',
+      },
+
+      {
+        title: 'Moving Storms', artist: '2024',
+        description: 'A fresh pressing on heavy board. A bridge, a sun, and ten songs about leaving.',
+        text: TEXT_STUB_MS
+      },
+    ]
+
+    const COPY = {
+      note: '2026',
+      brand: 'I See You',
+      sign: 'Listen',
+      signHref: 'https://band.link/iseeyou_uprooted26',
+    }
+
+    const N = RELEASES.length
+
+    /* ============================================================
+       геометрия — константы
+       ============================================================ */
+
+    const DEG = Math.PI / 180
+    const TAN = Math.tan(17 * DEG)
+
+    const SLEEVE = 31.4
+    const THICK = 0.42         // толщина торца = высота подписи на нём, ни больше ни меньше
+    const FOLD = THICK / 2     // радиус фальца: торец скруглён сверху и снизу в полукруг
+    const ARC_R = 110
+    const PIVOT_Y = -110
+    const TURN = 86 * DEG
+    const STEP = 4.5 * DEG
+    const SLOTS = 32
+    const CENTER = SLOTS / 2
+    const LIFT = 7
+    const REC_R = 14.9
+
+    const PROXY_D = 7            // толщина ловушки курсора: меньше шага дуги (ARC_R*STEP ≈ 8.6)
+
+    const SLEEVE_COLORS = ['#FC2234', '#D4E0EA', '#1D2A57', '#B3C5DA']
+
+    /* цвет берётся из таблицы стилей, чтобы палитра жила в одном месте */
+    const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim()
+
+    /* цикл из четырёх — по умолчанию; отдельный релиз может назвать свой цвет в каталоге */
+    const sleeveColor = i => RELEASES[i].sleeve ? cssVar(RELEASES[i].sleeve) : SLEEVE_COLORS[i % 4]
+    const spineInk = i => RELEASES[i].ink
+      ? cssVar(RELEASES[i].ink)
+      : ((i % 4 === 1 || i % 4 === 3) ? NAVY : BG)
+    const RECORD_COLORS = ['#161718', '#161718', '#161718', '#161718']
+
+    const NAVY = '#1D2A57'
+    const BG = '#F7FBFF'
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    let narrow = false, aspect = 1, camZ = 0, targetY = -1
+
+    function readViewport() {
+      const w = innerWidth, h = innerHeight
+      aspect = w / h
+      narrow = w < 900
+      targetY = narrow ? 2 : -1
+      const FILL = narrow ? 0.46 : 0.58
+      camZ = SLEEVE / (2 * TAN * FILL) + SLEEVE / 2
+    }
+    readViewport()
+
+    /* положение крупного плана */
+    function cardPlacement() {
+      /* на узком экране под обложку уходит меньше: композиция «конверт + пластинка» целиком
+         встаёт над шторкой текста и не заезжает под неё */
+      const CARD_FILL = narrow ? 0.245 : 0.47
+      const dist = SLEEVE / (2 * TAN * CARD_FILL)
+      const halfW = TAN * dist * aspect
+      const halfH = TAN * dist
+      if (narrow) {
+        return { dist, x: 0, y: targetY + halfH * 0.44 - REC_R / 2 }
+      }
+      return {
+        dist,
+        x: -halfW + halfW * 2 * 0.07 + SLEEVE / 2,
+        y: targetY - REC_R / 2,
+      }
+    }
+
+    /* ============================================================
+       сцена
+       ============================================================ */
+
+    const canvas = document.getElementById('stage')
+
+    let renderer
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false })
+    } catch (e) {
+      showFallback('browser-webgl')
+      throw e
+    }
+    if (!renderer.getContext()) { showFallback('browser-webgl') }
+
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.NoToneMapping
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+    renderer.setClearColor(BG, 1)
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(34, aspect, 1, 2000)
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0))
+    const key = new THREE.DirectionalLight(0xffffff, 0.35)
+    key.position.set(0.35, 0.8, 1)
+    scene.add(key)
+
+    const fanRoot = new THREE.Group()
+    scene.add(fanRoot)
+
+    /* короб укорочен ровно на толщину — недостающее сверху и снизу добирают фальцы,
+       поэтому силуэт конверта остаётся ровно SLEEVE в высоту */
+    const sleeveGeo = new THREE.BoxGeometry(SLEEVE, SLEEVE - THICK, THICK)
+    const foldGeo = new THREE.CylinderGeometry(FOLD, FOLD, SLEEVE, 20, 1)
+    foldGeo.rotateZ(Math.PI / 2)                     // ось фальца — поперёк конверта
+    const recordGeo = new THREE.CircleGeometry(REC_R, 128)
+    const proxyGeo = new THREE.BoxGeometry(SLEEVE, SLEEVE + LIFT, PROXY_D)
+    const proxyMat = new THREE.MeshBasicMaterial({ visible: false })
+
+    /* ---------- текстуры обложек ---------- */
+
+    const covers = new Array(N).fill(null)
+    let coversLoaded = 0, coversFailed = 0
+
+    const loader = new THREE.TextureLoader()
+    for (let n = 0; n < N; n++) {
+      loader.load(
+        `covers/${n + 1}.jpg`,
+        tex => {
+          const img = tex.image
+          const a = img.width / img.height
+          if (a > 1) { tex.repeat.set(1 / a, 1); tex.offset.set((1 - 1 / a) / 2, 0) }
+          else { tex.repeat.set(1, a); tex.offset.set(0, (1 - a) / 2) }
+          tex.colorSpace = THREE.SRGBColorSpace
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
+          tex.generateMipmaps = true
+          tex.minFilter = THREE.LinearMipmapLinearFilter
+          covers[n] = tex
+          coversLoaded++
+          invalidateAll()
+        },
+        undefined,
+        () => { coversFailed++; if (coversFailed === N) showFallback('covers') }
+      )
+    }
+
+    /* ---------- текстуры торцов и пластинок ---------- */
+
+    const SPINE_FILL = 0.86      // доля торца под прописные, остаток — воздух до фальцев
+
+    function spineTexture(rel, paper, ink) {
+      const W = 64
+      const H = Math.round(W * (SLEEVE - THICK) / THICK)   // пропорции самой грани торца
+      const c = document.createElement('canvas')
+      c.width = W; c.height = H
+      const g = c.getContext('2d')
+
+      /* фон запекается в текстуру: прозрачность здесь дала бы чёрный торец */
+      g.fillStyle = paper
+      g.fillRect(0, 0, W, H)
+
+      const line = `${rel.artist}  —  ${rel.title}`.toUpperCase()
+      const face = px => `600 ${px}px ui-monospace, Menlo, monospace`
+
+      /* кегль подбирается по фактической высоте прописных: подпись ровно в ширину торца,
+         а толщина торца задана этой высотой — потому меряем, а не подставляем число */
+      g.textBaseline = 'alphabetic'
+      if ('letterSpacing' in g) g.letterSpacing = '3px'
+      g.font = face(100)
+      const probe = g.measureText(line)
+      const vis = probe.actualBoundingBoxAscent + probe.actualBoundingBoxDescent
+      g.font = face(100 * (W * SPINE_FILL) / vis)
+
+      const m = g.measureText(line)
+      const a = m.actualBoundingBoxAscent, d = m.actualBoundingBoxDescent
+
+      g.translate(W / 2, H * 0.66)
+      g.rotate(-Math.PI / 2)
+      g.fillStyle = ink
+      g.textAlign = 'left'
+      g.fillText(line, 0, (a - d) / 2)
+
+      const t = new THREE.CanvasTexture(c)
+      t.colorSpace = THREE.SRGBColorSpace
+      t.anisotropy = renderer.capabilities.getMaxAnisotropy()
+      return t
+    }
+
+    function recordTexture(disc) {
+      const S = 1024
+      const c = document.createElement('canvas')
+      c.width = S; c.height = S
+      const g = c.getContext('2d')
+      const R = S / 2
+
+      const LABEL_R = R * 0.36        // этикетка
+      const LAND_IN = R * 0.40        // гладкое поле от этикетки до дорожек
+      const GROOVE_IN = R * 0.44      // начало нарезки
+      const GROOVE_OUT = R * 0.955    // конец нарезки
+      const RIM = R * 0.985           // гладкий заход у края
+
+      const ring = (r, from = 0, to = Math.PI * 2) => {
+        g.beginPath(); g.arc(R, R, r, from, to)
+      }
+
+      /* Блик винила анизотропный: свет бежит вдоль дорожек и собирается в две
+         противоположные дуги, а не растекается равномерно. Отсюда конический
+         градиент с двумя долями — на глаз это и читается как «пластинка». */
+      const GLOSS = 0.8               // общая яркость блика: одна ручка на все слои
+
+      const sheen = a0 => {
+        const a = a0 * GLOSS
+        if (g.createConicGradient) {
+          const grad = g.createConicGradient(-Math.PI / 4, R, R)
+          const lobes = [
+            [0.00, 1.00], [0.05, 0.55], [0.13, 0.10], [0.30, 0.02], [0.42, 0.22],
+            [0.50, 0.95], [0.58, 0.22], [0.70, 0.02], [0.87, 0.10], [0.95, 0.55], [1.00, 1.00],
+          ]
+          for (const [p, k] of lobes) grad.addColorStop(p, `rgba(255,255,255,${(k * a).toFixed(4)})`)
+          return grad
+        }
+        /* запасной вариант: одна диагональ вместо двух дуг */
+        const grad = g.createLinearGradient(0, S, S, 0)
+        grad.addColorStop(0, `rgba(255,255,255,${a})`)
+        grad.addColorStop(0.55, 'rgba(255,255,255,0)')
+        grad.addColorStop(1, `rgba(255,255,255,${a * 0.8})`)
+        return grad
+      }
+
+      g.clearRect(0, 0, S, S)
+
+      /* основа */
+      g.fillStyle = disc
+      ring(R); g.fill()
+
+      /* общий блик по всему диску, слабый */
+      g.fillStyle = sheen(0.10)
+      ring(R); g.fill()
+
+      /* гладкие поля — заход у края и площадка перед этикеткой — блестят сильнее
+         нарезанной части: там поверхность зеркальная */
+      g.save()
+      g.beginPath(); g.arc(R, R, R, 0, Math.PI * 2); g.arc(R, R, RIM, 0, Math.PI * 2, true)
+      g.clip('evenodd')
+      g.fillStyle = sheen(0.42); g.fillRect(0, 0, S, S)
+      g.restore()
+
+      g.save()
+      g.beginPath(); g.arc(R, R, GROOVE_IN, 0, Math.PI * 2); g.arc(R, R, LAND_IN, 0, Math.PI * 2, true)
+      g.clip('evenodd')
+      g.fillStyle = sheen(0.30); g.fillRect(0, 0, S, S)
+      g.restore()
+
+      /* дорожки: только светлые волоски. Тёмные промежутки рисовать не надо —
+         при уменьшении они усредняются со светлыми в серую кашу */
+      g.strokeStyle = sheen(0.30)
+      g.lineWidth = 1
+      for (let r = GROOVE_IN; r < GROOVE_OUT; r += 3) { ring(r); g.stroke() }
+
+      /* редкие разделители между зонами записи */
+      g.strokeStyle = sheen(0.55)
+      g.lineWidth = 1.6
+      for (const k of [0.52, 0.63, 0.74, 0.86]) { ring(R * k); g.stroke() }
+
+      /* кромка ловит свет ярче всего */
+      g.strokeStyle = sheen(0.85)
+      g.lineWidth = 2.5
+      ring(R - 1.5); g.stroke()
+
+      /* и тут же уходит в тень — иначе край выглядит наклейкой */
+      const edge = g.createRadialGradient(R, R, R * 0.93, R, R, R)
+      edge.addColorStop(0, 'rgba(0,0,0,0)')
+      edge.addColorStop(1, 'rgba(0,0,0,.45)')
+      g.fillStyle = edge
+      ring(R); g.fill()
+
+      /* этикетка светлая */
+      g.fillStyle = BG
+      ring(LABEL_R); g.fill()
+
+      g.strokeStyle = 'rgba(0,0,0,.06)'
+      g.lineWidth = 1
+      for (const k of [0.42, 0.60, 0.78]) { ring(LABEL_R * k); g.stroke() }
+
+      /* винил чуть набегает на край этикетки */
+      const lip = g.createRadialGradient(R, R, LABEL_R * 0.88, R, R, LABEL_R)
+      lip.addColorStop(0, 'rgba(0,0,0,0)')
+      lip.addColorStop(1, 'rgba(0,0,0,.16)')
+      g.fillStyle = lip
+      ring(LABEL_R); g.fill()
+
+      /* отверстие под шпиндель — чёрное, иначе на светлой этикетке его не видно.
+         Центр диска стоит на кромке конверта, поэтому в кадре оно читается полукругом */
+      g.fillStyle = '#000000'
+      ring(R * 0.035); g.fill()
+
+      const tex = new THREE.CanvasTexture(c)
+      tex.colorSpace = THREE.SRGBColorSpace
+      tex.anisotropy = renderer.capabilities.getMaxAnisotropy()
+      return tex
+    }
+
+    /* тёмно-синий по светлому, светлый по тёмному — на торце это единственный текст */
+    const spineTex = RELEASES.map((r, i) => {
+      const paper = sleeveColor(i)
+      const ink = spineInk(i)
+      return spineTexture(r, paper, ink)
+    })
+    /* этикетка больше не зависит от релиза — на каждый цвет диска хватает одной текстуры */
+    const discTex = new Map()
+    const recordTex = RELEASES.map((r, i) => {
+      const c = RECORD_COLORS[i % 4]
+      if (!discTex.has(c)) discTex.set(c, recordTexture(c))
+      return discTex.get(c)
+    })
+
+    /* ---------- сборка конверта ---------- */
+    /* грани BoxGeometry: [+x, -x, +y, -y, +z, -z]
+       ±x — торец (смотрит в камеру, конверт развёрнут на 86°)
+       ±z — плоские грани, обложка кладётся на обе                       */
+
+    function makeSleeve() {
+      const mats = [
+        new THREE.MeshLambertMaterial(),                 // +x торец
+        new THREE.MeshLambertMaterial(),                 // -x торец
+        new THREE.MeshLambertMaterial(),                 // +y
+        new THREE.MeshLambertMaterial(),                 // -y
+        new THREE.MeshBasicMaterial(),                   // +z обложка
+        new THREE.MeshBasicMaterial(),                   // -z обложка
+      ]
+      const mesh = new THREE.Mesh(sleeveGeo, mats)
+
+      /* фальцы сидят на материале кромки: dressSleeve красит mats[2], они следуют за ним */
+      const foldTop = new THREE.Mesh(foldGeo, mats[2])
+      const foldBot = new THREE.Mesh(foldGeo, mats[2])
+      foldTop.position.y = (SLEEVE - THICK) / 2
+      foldBot.position.y = -(SLEEVE - THICK) / 2
+      mesh.add(foldTop, foldBot)
+
+      const record = new THREE.Mesh(recordGeo, new THREE.MeshBasicMaterial({ side: THREE.DoubleSide }))
+      record.position.set(0, 0, 0)
+      mesh.add(record)
+
+      return { mesh, mats, record }
+    }
+
+    /* конверт n-го релиза */
+    function dressSleeve(s, rel) {
+      const c = sleeveColor(rel)
+      s.mats[0].map = s.mats[1].map = spineTex[rel]
+      s.mats[0].color.set('#ffffff'); s.mats[1].color.set('#ffffff')
+      s.mats[2].color.set(c); s.mats[3].color.set(c)
+
+      const tex = covers[rel]
+      s.mats[4].map = s.mats[5].map = tex || null
+      s.mats[4].color.set(tex ? '#ffffff' : c)
+      s.mats[5].color.set(tex ? '#ffffff' : c)
+      for (const m of s.mats) m.needsUpdate = true
+
+      s.record.material.map = recordTex[rel]
+      s.record.material.color.set('#ffffff')
+      s.record.material.needsUpdate = true
+    }
+
+    /* ---------- слоты ---------- */
+
+    const slots = []
+    for (let i = 0; i < SLOTS; i++) {
+      const group = new THREE.Group()
+      const turn = new THREE.Group()
+      const s = makeSleeve()
+      const proxy = new THREE.Mesh(proxyGeo, proxyMat)
+
+      proxy.position.y = LIFT / 2
+      turn.add(s.mesh, proxy)
+      group.add(turn)
+      fanRoot.add(group)
+
+      proxy.userData.slot = i
+      slots.push({ i, group, turn, sleeve: s, proxy, release: -1, lift: 0, hover: false })
+    }
+
+    function invalidateAll() { for (const sl of slots) { sl.release = -1 } if (hero.release >= 0) { dressSleeve(hero.s, hero.release) } }
+
+    /* ---------- герой крупного плана ---------- */
+
+    const hero = { s: makeSleeve(), release: -1, recOut: 0 }
+    hero.s.mesh.visible = false
+    scene.add(hero.s.mesh)
+
+    /* ============================================================
+       состояние
+       ============================================================ */
+
+    let scrollTarget = 0
+    let scroll = 0
+    let active = 0
+
+    let mode = 'intro'               // intro | entering | fan | opening | card | closing
+    let t0 = 0
+    let cardT = 0                    // 0 — веер, 1 — карточка
+    const FLY = reduced ? 1 : 700
+    const ENTER = reduced ? 1 : 1100        // веер выезжает из ячейки
+    const ENTER_SEED = 0.05                 // с какого масштаба начинает
+
+    /* смещение и масштаб веера на время вступления */
+    let introK = ENTER_SEED
+    let introX = 0, introY = 0
+    const slotWorld = { x: 0, y: 0 }
+    const REC_DELAY = reduced ? 0 : 280
+    const REC_TIME = reduced ? 1 : 520
+
+    const heroFrom = { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }
+    const heroTo = { pos: new THREE.Vector3(), quat: new THREE.Quaternion() }
+
+    const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    const easeOut = t => 1 - Math.pow(1 - t, 3)
+
+    /* ============================================================
+       раскладка
+       ============================================================ */
+
+    function layout(dt) {
+      const tau = reduced ? 0 : 0.09
+      if (tau === 0) scroll = scrollTarget
+      else scroll += (scrollTarget - scroll) * (1 - Math.exp(-dt / tau))
+
+      const k = Math.round(scroll)
+      const frac = scroll - k
+
+      const nextActive = ((k % N) + N) % N
+      if (nextActive !== active) { active = nextActive; announce() }
+
+      for (const sl of slots) {
+        const ang = (sl.i - CENTER - frac) * STEP
+        const x = ARC_R * Math.sin(ang)
+        const y = PIVOT_Y + ARC_R * Math.cos(ang)
+
+        sl.group.position.set(x, y, 0)
+        sl.group.rotation.z = -ang
+        sl.turn.rotation.y = TURN - Math.atan2(x, camZ)
+
+        /* содержимое слота — целая часть прокрутки */
+        const rel = (((sl.i - CENTER + k) % N) + N) % N
+        if (rel !== sl.release) { sl.release = rel; dressSleeve(sl.sleeve, rel) }
+
+        /* выдвижение по ховеру — отдельной величиной, без пружины раскладки */
+        const want = sl.hover && mode === 'fan' ? LIFT : 0
+        sl.lift += (want - sl.lift) * (reduced ? 1 : 1 - Math.exp(-dt / 0.07))
+        sl.sleeve.mesh.position.y = sl.lift
+      }
+    }
+
+    /* ============================================================
+       камера и переход в карточку
+       ============================================================ */
+
+    function applyCamera() {
+      const p = cardPlacement()
+      const z = camZ + (p.dist - camZ) * easeInOut(cardT)
+      camera.position.set(0, targetY, z)
+      camera.lookAt(0, targetY, 0)
+      fanRoot.position.set(introX, introY - 140 * easeInOut(cardT), 0)
+      fanRoot.scale.setScalar(introK)
+    }
+
+    function heroTargets(slotIndex) {
+      const sl = slots[slotIndex]
+
+      /* слот читается там, где он будет при закрытой карточке: на возврате веер ещё
+         уведён под нижний край, и без этого конверт улетал бы мимо своего места */
+      const keep = fanRoot.position.y
+      fanRoot.position.y = 0
+      fanRoot.updateMatrixWorld(true)
+      sl.sleeve.mesh.matrixWorld.decompose(heroFrom.pos, heroFrom.quat, new THREE.Vector3())
+      fanRoot.position.y = keep
+      fanRoot.updateMatrixWorld(true)
+
+      const p = cardPlacement()
+      heroTo.pos.set(p.x, p.y, 0)
+      heroTo.quat.identity()
+    }
+
+    function applyHero(t) {
+      const e = easeInOut(t)
+      hero.s.mesh.position.lerpVectors(heroFrom.pos, heroTo.pos, e)
+      hero.s.mesh.quaternion.slerpQuaternions(heroFrom.quat, heroTo.quat, e)
+      hero.s.record.position.y = hero.recOut * (SLEEVE / 2)
+    }
+
+    let openedFrom = -1
+
+    function openCard(slotIndex) {
+      if (mode !== 'fan') return
+      const rel = slots[slotIndex].release
+
+      openedFrom = slotIndex
+      hero.release = rel
+      dressSleeve(hero.s, rel)
+      hero.s.mesh.visible = true
+      hero.recOut = 0
+      slots[slotIndex].sleeve.mesh.visible = false
+      for (const sl of slots) sl.hover = false
+
+      heroTargets(slotIndex)
+      applyHero(0)
+
+      fillCard(rel)
+      document.body.classList.add('viewing')
+      document.getElementById('card').setAttribute('aria-hidden', 'false')
+      canvas.classList.remove('over-sleeve')
+
+      mode = 'opening'; t0 = performance.now()
+      if (reduced) { cardT = 1; hero.recOut = 1; applyHero(1); mode = 'card' }
+      document.getElementById('card').focus({ preventScroll: true })
+    }
+
+    function closeCard() {
+      if (mode !== 'card' && mode !== 'opening') return
+      heroTargets(openedFrom)
+      document.body.classList.remove('viewing')
+      document.getElementById('card').setAttribute('aria-hidden', 'true')
+      mode = 'closing'; t0 = performance.now()
+      if (reduced) { finishClose() }
+      const dot = document.querySelector(`nav.dots a[data-i="${active}"]`)
+      if (dot) dot.focus({ preventScroll: true })
+    }
+
+    function finishClose() {
+      cardT = 0
+      hero.s.mesh.visible = false
+      hero.recOut = 0
+      if (openedFrom >= 0) slots[openedFrom].sleeve.mesh.visible = true
+      openedFrom = -1
+      mode = 'fan'
+    }
+
+    /* ============================================================
+       кадр
+       ============================================================ */
+
+    let last = performance.now()
+
+    /* ============================================================
+       вступление — полка, из которой выезжает веер
+       ============================================================ */
+
+    /* пустая ячейка на картинке, в долях её ширины и высоты */
+    const SLOT = { x: 0.713, y: 0.474 }
+
+    fanRoot.visible = false
+
+    /* экранная точка -> мир в плоскости z = 0: камера смотрит вдоль оси Z,
+       так что достаточно линейного пересчёта через полукадр */
+    function screenToWorld(px, py) {
+      const halfH = TAN * camZ
+      const halfW = halfH * aspect
+      return {
+        x: ((px / innerWidth) * 2 - 1) * halfW,
+        y: targetY + (-(py / innerHeight) * 2 + 1) * halfH,
+      }
+    }
+
+    /* элемент ищется каждый раз, а не берётся заранее: measureSlot зовётся из resize,
+       который отрабатывает раньше этой секции */
+    function measureSlot() {
+      const img = document.querySelector('.shelf img')
+      if (!img) return
+      const r = img.getBoundingClientRect()
+      const w = screenToWorld(r.left + r.width * SLOT.x, r.top + r.height * SLOT.y)
+      slotWorld.x = w.x
+      slotWorld.y = w.y
+    }
+
+    function finishEnter() {
+      introK = 1; introX = 0; introY = 0
+      mode = 'fan'
+      document.body.classList.remove('intro', 'entering')
+      const el = document.getElementById('shelf')
+      if (el) el.style.display = 'none'
+    }
+
+    function enterFromShelf() {
+      if (mode !== 'intro') return
+      measureSlot()
+      fanRoot.visible = true
+      document.body.classList.add('entering')
+      mode = 'entering'
+      t0 = performance.now()
+      /* точки проявляются, когда веер уже разошёлся, а не в момент клика */
+      setTimeout(() => document.body.classList.remove('intro'), ENTER * 0.55)
+      if (reduced) finishEnter()
+    }
+
+    {
+      const shelf = document.getElementById('shelf')
+      const img = shelf.querySelector('img')
+      const reveal = () => requestAnimationFrame(() => document.body.classList.add('ready'))
+
+      shelf.addEventListener('click', enterFromShelf)
+
+      if (img.complete && img.naturalWidth) reveal()
+      else img.addEventListener('load', reveal, { once: true })
+
+      /* если картинка не загрузилась, запирать посетителя на пустом экране нельзя */
+      img.addEventListener('error', () => {
+        document.body.classList.add('ready')
+        fanRoot.visible = true
+        finishEnter()
+      }, { once: true })
+    }
+
+    function frame(now) {
+      requestAnimationFrame(frame)
+      const dt = Math.min((now - last) / 1000, 0.05)
+      last = now
+
+      if (mode === 'entering') {
+        const t = Math.min((now - t0) / ENTER, 1)
+        const e = easeOut(t)
+        introK = ENTER_SEED + (1 - ENTER_SEED) * e
+        introX = slotWorld.x * (1 - e)
+        introY = slotWorld.y * (1 - e)
+        if (t >= 1) finishEnter()
+      } else if (mode === 'opening') {
+        const t = Math.min((now - t0) / FLY, 1)
+        cardT = t
+        hero.recOut = easeOut(Math.min(Math.max((now - t0 - REC_DELAY) / REC_TIME, 0), 1))
+        applyHero(t)
+        if (t >= 1) mode = 'card'
+      } else if (mode === 'card') {
+        hero.recOut = 1
+        applyHero(1)
+      } else if (mode === 'closing') {
+        const t = Math.min((now - t0) / FLY, 1)
+        cardT = 1 - t
+        hero.recOut = 1 - easeOut(t)
+        applyHero(1 - t)
+        if (t >= 1) finishClose()
+      }
+
+      layout(dt)          /* смена текстур — до отрисовки, иначе обложки моргают на границе шага */
+      applyCamera()
+
+      camera.aspect = aspect
+      camera.updateProjectionMatrix()
+      renderer.render(scene, camera)
+    }
+    /* цикл запускается в самом конце модуля: layout() трогает разметку,
+       и до её сборки ни одного кадра пройти не должно */
+
+    /* ============================================================
+       размеры
+       ============================================================ */
+
+    function resize() {
+      readViewport()
+      const w = canvas.clientWidth || innerWidth
+      const h = canvas.clientHeight || innerHeight
+      renderer.setSize(w, h, false)
+      camera.aspect = aspect
+      camera.updateProjectionMatrix()
+
+      /* крупный план считается от размеров кадра: при повороте экрана или смене окна
+         его надо пересчитать, иначе обложка остаётся в позиции прежнего кадра */
+      if (mode === 'card' || mode === 'opening') {
+        const p = cardPlacement()
+        heroTo.pos.set(p.x, p.y, 0)
+        if (mode === 'card') applyHero(1)
+      }
+
+      /* точка выхода веера считается от экранного положения полки */
+      if (mode === 'entering') measureSlot()
+    }
+    new ResizeObserver(resize).observe(document.documentElement)
+    addEventListener('resize', resize)
+    resize()
+
+    /* ============================================================
+       ввод
+       ============================================================ */
+
+    const ray = new THREE.Raycaster()
+    const ptr = new THREE.Vector2()
+    const proxies = slots.map(s => s.proxy)
+
+    function pxPerStep() {
+      const pxPerCm = innerHeight / (2 * TAN * camZ)
+      return ARC_R * STEP * pxPerCm
+    }
+
+    function pick(ev) {
+      ptr.x = (ev.clientX / innerWidth) * 2 - 1
+      ptr.y = -(ev.clientY / innerHeight) * 2 + 1
+      ray.setFromCamera(ptr, camera)
+      const hit = ray.intersectObjects(proxies, false)[0]
+      return hit ? hit.object.userData.slot : -1
+    }
+
+    canvas.addEventListener('wheel', ev => {
+      if (mode !== 'fan') return
+      ev.preventDefault()
+      scrollTarget += ev.deltaY / 100          /* одна «щелчка» — примерно один конверт */
+    }, { passive: false })
+
+    let dragging = false, dragId = null, dragX = 0, moved = 0, startScroll = 0, downAt = 0
+
+    canvas.addEventListener('pointerdown', ev => {
+      if (mode !== 'fan') return
+      dragging = true; dragId = ev.pointerId
+      dragX = ev.clientX; moved = 0; startScroll = scrollTarget; downAt = performance.now()
+      canvas.setPointerCapture(dragId)
+      canvas.classList.add('dragging')
+    })
+
+    canvas.addEventListener('pointermove', ev => {
+      if (mode !== 'fan') return
+
+      if (dragging) {
+        const dx = ev.clientX - dragX
+        moved = Math.max(moved, Math.abs(dx))
+        scrollTarget = startScroll - dx / pxPerStep()
+        return
+      }
+
+      const i = pick(ev)
+      for (const sl of slots) sl.hover = (sl.i === i)
+      canvas.classList.toggle('over-sleeve', i >= 0)
+    })
+
+    function endDrag(ev) {
+      if (!dragging) return
+      dragging = false
+      canvas.classList.remove('dragging')
+      try { canvas.releasePointerCapture(dragId) } catch { }
+
+      /* клик засчитывается только без протяжки */
+      if (moved < 5 && performance.now() - downAt < 400) {
+        const i = pick(ev)
+        if (i >= 0) openCard(i)
+      }
+    }
+    canvas.addEventListener('pointerup', endDrag)
+    canvas.addEventListener('pointercancel', () => { dragging = false; canvas.classList.remove('dragging') })
+
+    canvas.addEventListener('pointerleave', () => {
+      for (const sl of slots) sl.hover = false
+      canvas.classList.remove('over-sleeve')
+    })
+
+    /* клик по полю вокруг обложки закрывает карточку */
+    canvas.addEventListener('click', ev => {
+      if (mode !== 'card') return
+      ray.setFromCamera(
+        new THREE.Vector2((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1),
+        camera)
+      if (!ray.intersectObject(hero.s.mesh, true).length) closeCard()
+    })
+
+    addEventListener('keydown', ev => {
+      if (ev.key === 'Escape' && (mode === 'card' || mode === 'opening')) closeCard()
+      if (mode !== 'fan') return
+      if (ev.key === 'ArrowRight') { scrollTarget = Math.round(scrollTarget) + 1; ev.preventDefault() }
+      if (ev.key === 'ArrowLeft') { scrollTarget = Math.round(scrollTarget) - 1; ev.preventDefault() }
+    })
+
+    document.getElementById('c-back').addEventListener('click', closeCard)
+
+    /* ============================================================
+       разметка
+       ============================================================ */
+
+    document.getElementById('h-note').textContent = COPY.note
+    document.getElementById('h-brand').textContent = COPY.brand
+    for (const id of ['h-sign', 'c-listen']) {
+      const a = document.getElementById(id)
+      a.textContent = COPY.sign
+      a.href = COPY.signHref
+    }
+
+    function goTo(j) {
+      const cur = Math.round(scroll)
+      let d = ((j - ((cur % N) + N) % N) % N + N) % N
+      if (d > N / 2) d -= N
+      scrollTarget = cur + d
+    }
+
+    const dots = document.getElementById('dots')
+    RELEASES.forEach((r, j) => {
+      const a = document.createElement('a')
+      a.href = `#release-${j + 1}`
+      a.dataset.i = j
+      a.setAttribute('aria-label', `${r.title} — ${r.artist}`)
+      a.addEventListener('click', ev => { ev.preventDefault(); goTo(j) })
+      a.addEventListener('focus', () => { if (mode === 'fan') goTo(j) })   /* фокус доводит карусель */
+      dots.appendChild(a)
+    })
+
+    /* каталог для скринридера — канвас для него пуст */
+    document.getElementById('catalog').innerHTML = RELEASES.map((r, j) => `
+  <article id="release-${j + 1}">
+    <h2>${esc(r.title)}</h2>
+    <p>${esc(r.artist)}</p>
+    <p>${esc(r.description)}</p>
+    <p>${esc(r.text)}</p>
+  </article>`).join('')
+
+    function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) }
+
+    function announce() {
+      for (const a of dots.children) a.setAttribute('aria-current', String(+a.dataset.i === active))
+      const r = RELEASES[active]
+      document.getElementById('live').textContent = `${active + 1} of ${N}. ${r.title}, ${r.artist}.`
+    }
+    announce()
+
+    function fillCard(rel) {
+      const r = RELEASES[rel]
+      document.getElementById('c-title').textContent = r.title
+      document.getElementById('c-artist').textContent = r.artist
+      document.getElementById('c-desc').textContent = r.description
+      const text = document.getElementById('c-text')
+      text.textContent = r.text
+      text.scrollTop = 0
+      document.querySelector('.card-cols').scrollTop = 0   // шторка всегда открывается с заголовка
+    }
+
+    /* ============================================================
+       запасная сетка — с настоящей причиной
+       ============================================================ */
+
+    function showFallback(why) {
+      const el = document.getElementById('fallback')
+      if (el.classList.contains('on')) return
+      el.classList.add('on')
+
+      document.getElementById('fb-why').innerHTML =
+        why === 'covers'
+          ? (location.protocol === 'file:'
+            ? 'Обложки не загрузились: страница открыта как локальный файл, и браузер не даёт ей читать соседнюю папку. Запустите <code>python3 -m http.server 8000</code> в папке со страницей и откройте <code>http://localhost:8000</code>.'
+            : 'Обложки не загрузились: файлы <code>covers/1.jpg … covers/' + N + '.jpg</code> не найдены. WebGL при этом работает.')
+          : 'Сцена не запустилась: браузер не отдал контекст WebGL. Обложки ниже — вся коллекция в обычной сетке.'
+
+      document.getElementById('fb-grid').innerHTML = RELEASES.map((r, j) => `
+    <figure>
+      <img src="covers/${j + 1}.jpg" alt="${esc(r.title)}">
+      <figcaption class="mono">${esc(r.title)}</figcaption>
+    </figure>`).join('')
+    }
+
+    /* всё собрано — можно крутить */
+    requestAnimationFrame(frame)
+  </script>
+</body>
+
+</html>
