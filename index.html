@@ -1076,11 +1076,46 @@
       const m = g.measureText(line)
       const a = m.actualBoundingBoxAscent, d = m.actualBoundingBoxDescent
 
+      g.save()
       g.translate(W / 2, H * 0.66)
       g.rotate(-Math.PI / 2)
       g.fillStyle = ink
       g.textAlign = 'left'
       g.fillText(line, 0, (a - d) / 2)
+      g.restore()
+
+      /* Износ торца: замятости поперёк и царапины вдоль. Рисуются поверх подписи —
+         потёртость на настоящем конверте лежит поверх краски, а не под ней.
+         Ручки: сколько отметин и насколько они видны. Учти, что торец на экране
+         около полутора десятков пикселей в ширину: волосок в один пиксель текстуры
+         усредняется мипмапом почти в ничто, поэтому линии заметно толще, чем кажется
+         разумным при взгляде на канвас. */
+      const WEAR = { creases: 6, scratches: 20, alpha: 1 }
+
+      g.lineCap = 'round'
+
+      for (let i = 0; i < WEAR.creases; i++) {
+        const y = H * (0.05 + Math.random() * 0.9)
+        const lean = (Math.random() - 0.5) * 30
+        g.strokeStyle = `rgba(228,230,234,${(0.22 + Math.random() * 0.16) * WEAR.alpha})`
+        g.lineWidth = 2.4 + Math.random() * 2.6
+        g.beginPath()
+        g.moveTo(-1, y)
+        g.quadraticCurveTo(W / 2, y + lean * 0.35, W + 1, y + lean)
+        g.stroke()
+      }
+
+      for (let i = 0; i < WEAR.scratches; i++) {
+        const x = 3 + Math.random() * (W - 6)
+        const y = Math.random() * H
+        const len = H * (0.008 + Math.random() * 0.045)
+        g.strokeStyle = `rgba(234,236,240,${(0.16 + Math.random() * 0.14) * WEAR.alpha})`
+        g.lineWidth = 1.5 + Math.random() * 1.4
+        g.beginPath()
+        g.moveTo(x, y)
+        g.lineTo(x + (Math.random() - 0.5) * 6, y + len)
+        g.stroke()
+      }
 
       const t = new THREE.CanvasTexture(c)
       t.colorSpace = THREE.SRGBColorSpace
