@@ -273,17 +273,24 @@
 
     /* ---------- карточка ---------- */
 
+    /* Закрытая карточка не просто прозрачна, а выключена целиком: прозрачный блок
+       продолжал бы ловить колесо и клики поверх веера, а его стрелка возврата и
+       блок текста — оставаться в обходе по Tab. visibility переключается в конце
+       затухания, поэтому уход карточки по-прежнему видно. */
     .card {
       position: fixed;
       inset: 0;
       z-index: 15;
       pointer-events: none;
       opacity: 0;
-      transition: opacity .3s ease;
+      visibility: hidden;
+      transition: opacity .3s ease, visibility 0s linear .3s;
     }
 
     body.viewing .card {
-      opacity: 1
+      opacity: 1;
+      visibility: visible;
+      transition: opacity .3s ease, visibility 0s
     }
 
     .card>* {
@@ -1579,7 +1586,10 @@
       return hit ? hit.object.userData.slot : -1
     }
 
-    canvas.addEventListener('wheel', ev => {
+    /* Слушатель на окне, а не на канвасе: под курсором может оказаться шапка, точки
+       или любой другой слой поверх сцены, и прокрутка не должна от этого пропадать.
+       На витрине странице всё равно нечего прокручивать, кроме веера. */
+    addEventListener('wheel', ev => {
       if (mode !== 'fan') return
       ev.preventDefault()
       scrollTarget += ev.deltaY / 100          /* одна «щелчка» — примерно один конверт */
