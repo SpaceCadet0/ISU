@@ -615,7 +615,20 @@
        каталог
        ============================================================ */
 
-    const TEXT_STUB_1 = `1. Station: Den Haag Centraal - 2:37
+    /* Отступы внутри шаблонного литерала попадают в сам текст: строки песни уезжают
+       вправо на ширину отступа кода. Снимаем общий отступ, чтобы литерал можно было
+       держать вровень с кодом, а на экран текст выходил прижатым к левому краю. */
+    const dedent = t => {
+      const lines = t.replace(/^\n/, '').replace(/\s+$/, '').split('\n')
+      /* первая строка стоит сразу за кавычкой и отступа не несёт — общий отступ
+         считается по продолжениям, иначе он всегда выходит нулевым */
+      const rest = lines.slice(1).filter(l => l.trim())
+      if (!rest.length) return lines[0]
+      const pad = Math.min(...rest.map(l => l.match(/^ */)[0].length))
+      return [lines[0], ...lines.slice(1).map(l => l.slice(pad))].join('\n')
+    }
+
+    const TEXT_STUB_1 = dedent(`1. Station: Den Haag Centraal - 2:37
                         2. Moving Storms - 3:22
                         3. Higher - 4:21
                         4. Sorry, It’s Too Quiet - 5:26
@@ -628,8 +641,8 @@
                         11. Stay with Me - 3:37
                         12. Terracotta Army - 4:22
                         13. Let’s Take a Ride in This Burning Car - 4:57
-                        14. Away - 5:09`
-    const TEXT_STUB_MS = `The wind from old Maas
+                        14. Away - 5:09`)
+    const TEXT_STUB_MS = dedent(`The wind from old Maas
                         Has thrown in the past
                         My body remembers those pulses much better than brain
 
@@ -660,8 +673,8 @@
                         More
                         More
                         More
-                        More`
-    const TEXT_STUB_AG = `Everything
+                        More`)
+    const TEXT_STUB_AG = dedent(`Everything
                           Everything goes right
                           Own your win
                           Shine with all your light
@@ -718,8 +731,8 @@
                           Alles goed
                           Plant there a pink flag
                           Alles goed
-                          Plant there a pink flag`
-    const TEXT_STUB_D = `My shadow was born the night she leaned on the frame
+                          Plant there a pink flag`)
+    const TEXT_STUB_D = dedent(`My shadow was born the night she leaned on the frame
                           Then i spent every breath throwing back her mistake
                           And i keep spinning the dream watching haze corrode my lungs
                           I keep spilling my guts shutting up their mouths
@@ -785,8 +798,8 @@
 
                           Hide your hate and pain
                           Don't disturb the fate
-                          Lie to hold the place`
-    const TEXT_STUB_TA = `The terracotta army's motion
+                          Lie to hold the place`)
+    const TEXT_STUB_TA = dedent(`The terracotta army's motion
                           The door is torn in bare emotion
                           Neurosis grounded into raw affect
 
@@ -829,62 +842,62 @@
                           The canvas frames preserve the notion
                           The halls are void but never empty
 
-                          Never empty, never empty`
+                          Never empty, never empty`)
 
     const RELEASES = [
       {
         title: 'Uprooted', artist: 'I See You',
         sleeve: '--orange', ink: '--navy',
-        description: 'First pressing on orange stock, cut in 2024. Remastered from the original session tapes.',
+        description: 'description',
         text: TEXT_STUB_1
       },
 
       {
         title: 'Higher', artist: '2025',
-        description: 'A black and white single recorded over two nights. Three hundred copies, hand numbered.',
+        description: 'description',
       },
 
       {
         title: 'Number Nine', artist: '2025',
-        description: 'A red door and a reflection in glass. The whole record was shot in one block, in one day.',
+        description: 'description',
       },
 
       {
         title: 'Done', artist: '2025',
-        description: 'The darkest thing the band has put out. One microphone, one room, no mixing desk.',
+        description: 'description',
         text: TEXT_STUB_D
       },
 
       {
         title: 'Terracotta Army', artist: '2025',
-        description: 'Home recordings made in an empty flat, where only the clay soldier was left behind.',
+        description: 'description',
         text: TEXT_STUB_TA
       },
 
       {
         title: 'Let’s Take a Ride in This Burning Car', artist: '2025',
-        description: 'Gatefold sleeve, collaged from found photographs. The loudest side B in the catalogue.',
+        description: 'description',
       },
 
       {
         title: 'Alles Goed', artist: '2025',
-        description: 'A winter record mixed in Rotterdam. The tram on the cover runs the line past the studio.',
+        description: 'description',
         text: TEXT_STUB_AG
       },
 
       {
         title: 'Stay With Me', artist: '2025',
-        description: 'Pink and yellow collage, and the most direct pop the band has written. Sold out in a week.',
+        description: 'description',
       },
 
       {
         title: 'Uprooted', artist: '2024, Single',
-        description: 'A sequel to the first record, written in motion: trains, stations, rooms rented by the week.',
+        description: 'description',
       },
 
       {
         title: 'Moving Storms', artist: '2024',
-        description: 'A fresh pressing on heavy board. A bridge, a sun, and ten songs about leaving.',
+        description: 'description',
         text: TEXT_STUB_MS
       },
     ]
@@ -1694,7 +1707,7 @@
     <h2>${esc(r.title)}</h2>
     <p>${esc(r.artist)}</p>
     <p>${esc(r.description)}</p>
-    <p>${esc(r.text)}</p>
+    ${r.text ? `<p>${esc(r.text)}</p>` : ''}
   </article>`).join('')
 
     function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) }
