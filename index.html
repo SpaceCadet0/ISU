@@ -5,19 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>I See You — Uprooted, 2026</title>
-
-  <link rel="preload" href="PontiffWide.otf" as="font" type="font/otf" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
 
   <style>
-    /* марка набрана вложенным файлом: сеть для страницы больше не нужна.
-       Имя файла — с заглавной P: на регистрозависимом сервере строчная даст 404 */
-    @font-face {
-      font-family: "PontiffWide";
-      src: url("PontiffWide.otf") format("opentype");
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
+    /* сама гарнитура приходит таблицей стилей Google Fonts выше;
+       собственный @font-face здесь не нужен — без src он всё равно недействителен */
 
     :root {
       --bg: #F7FBFF;
@@ -26,7 +20,7 @@
       --orange: #de9143;
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      --serif: "PontiffWide", Georgia, serif;
+      --serif: "Dela Gothic One", Georgia, serif;
     }
 
     * {
@@ -843,6 +837,273 @@
                           The halls are void but never empty
 
                           Never empty, never empty`)
+    const TEXT_STUB_UR = dedent(`I must have been transmitting something
+                          Please rewind and reset all hard
+                          Pull me out, let me off, unplug me
+                          Who is ruling this shunting yard?
+
+                          Turn the tap
+                          Watch the flood
+
+                          I should have been a sunk-cost victim
+                          Humbly nourishing soils of seas
+                          With absorbed foreign grammar systems
+                          I wish I had devised new means
+
+                          But I settled among kakkerlakken
+                          I discovered belonging with them
+                          I rejoiced it as much as unpacking
+                          All the sop given up to first gen
+
+                          Once again
+                          Once again
+
+                          Trauma
+                          Nor was it recognized
+                          A coma
+                          Ancestry paralyzed
+
+                          Unstayed
+                          Nor what I meant to be
+                          There's no way
+                          I found no way to me
+
+                          After all, the forced disclosure
+                          Rolled a multiple exposure
+                          Generational conception
+                          Faced the matter of redemption
+
+                          Doubled harm and love I've got
+                          With random unreflected shots
+                          Uprooted
+
+                          I'm split in two
+                          I'm split in two
+
+                          Unfit
+                          Allied to no one part
+                          Please stop it
+                          I've got the only heart
+                          `)
+    const TEXT_STUB_H = dedent(`Morning tells you what to do
+Mirror helps your smile stick true
+Knees are bruised, but it’s the rule
+High performance makes you cool
+
+Coffee spills across the dress
+My poor girl, ignore the mess
+Numbers blink in urgent red
+Keep it looping in your head
+
+Higher, higher, fuel for the fire, higher
+Higher, higher, fuel for the fire, higher
+
+Knees are taped, the rent is paid
+Wrists are taped, the grade is raised
+If it hurts, you’re doing fine
+That’s how progress draws the line
+
+Keep painkillers in your bag
+Just in case the body drags
+Mirror nods, you look okay
+Get it higher, drive your way
+
+Higher, higher, fuel for the fire, higher
+Higher, higher, fuel for the fire, higher 
+Higher, higher
+Higher, higher      
+
+Someone’s doing twice as much
+Being normal, being Dutch
+Scroll it once, of course, you can
+Punch above your weight again
+
+Breath comes short, but that’s the pace
+Keep it moving, save the place
+Raise the bar another bit
+You are not the one who quit
+
+Higher, higher, fuel for the fire, higher, higher
+Higher, higher, fuel for the fire, higher, higher
+Higher
+Higher
+
+When someone wins the race      
+When someone takes your place
+Jump in and resubmit
+Oh fuck, you're almost hit
+
+There's nothing at the top
+Another moving stop
+It shifts before you land
+It goes just as you planned
+
+Higher, higher, fuel for the fire, higher, hi, higher
+Higher, higher, fuel for the fire, higher, hi, higher
+Higher
+Higher 
+
+Killing desire 
+In chasing gain`)
+    const TEXT_STUB_LT = dedent(`It’s our final ride
+I locked the doors and sparked the lighter
+The loop was pre-defined
+This is the end — no prey, no fighter
+
+I can’t
+I can’t deny that
+My path was a choice made by two
+
+I can’t
+I can’t deny that
+I’ve bent every line to please you
+
+You brought the fuel, let’s go
+You want it hot? Let’s feed the fire
+I think it makes me whole
+Well, go back to your fake empire
+
+I can’t
+I can’t deny that
+You’ve being expanded from me
+
+I can’t
+I can’t deny that
+I wish you would always be here
+
+Every praise they gave — I earned it
+Every loss you claimed — I turned it
+While you dragged across the oceans
+I’ve translated your devotions.
+
+You were raised by generations,
+Built from shame and isolation
+Killing one — and ten will follow
+You will drown inside your sorrow
+
+I don’t need
+I don’t need
+I don’t need words stuck tight anymore
+
+I don’t need
+I don’t need
+I don’t need arms bent back anymore
+
+My raw voice
+My marrow
+I’m all alone with hollow
+  `)
+    const TEXT_STUB_SW = dedent(`Here I am at the edge of the mainstream
+Jolt awake from ridiculous daydreams
+Gasp for air begging melting dissolving schemes (to)
+Stay with me
+
+Specters drift through the veins of dystopian land
+I have drowned where the lost-future ghosts expand
+Did they see fragments of me or just the brand?
+Hell with it take me down the Liffey strand
+
+This is me just a glitch of a time misplaced
+Hollowed out by the weight that I had to face
+I was born with delusions to be erased
+Zero ten has it happened, or all laid waste?
+
+Can you hear undercurrents cry out below?
+Matrix crashed with a shining stack overflow
+Roffa fam have you seen me or just the show?
+Count the sheep to the hum till the final blow
+
+Can you feel how the static begins to breach?
+Don't look back as the voids tear apart and screech
+Hold on tight as the pulse starts to overreach
+Stay with me
+
+Almost spilled out all the goodness leaking from my sore chest
+My heart still resists while haunting the illusion
+Pulls me, drags me from the imminent rage
+From the fatal storm of change
+
+Stay with me
+Stay with me
+Stay with me
+Stay with me
+Stay with me
+Stay with me
+Stay with me
+  `)
+    const TEXT_STUB_SI = dedent(`Humpty Dumpty, windmills struck a pose.
+Humpty Dumpty, windmills struck a pose.
+Gulls froze mid-air. No creak on stairs.
+Perfect firmware tames me, tames me.
+Humpty Dumpty, I should strike their pose.
+ 
+Humpty Dumpty, coffee cups get cold.
+Humpty Dumpty, it gets freaking cold.
+Talks go mute, the words don't shoot.
+Fresh smiles have brewed to rage me, cage me.
+Humpty Dumpty, no one else gets cold.
+  
+It’s all too quiet
+It’s all too quiet
+
+Humpty Dumpty, hold on to the wall.
+Humpty Dumpty, bricks drop from the wall.  
+Lands go flat. Hit 'hi' — no 'hat'. Run 'ex' — no 'pat'.
+It shakes me, shakes me.
+Humpty Dumpty, take me off this wall.
+
+Windows watch me, rooms devour my glow.
+Windows watch me, faux peace eats me whole.
+Math and stats don’t mirror that. I fall apart.
+It breaks me, breaks me.
+Windows, watch her — she'll put on a show.
+
+It’s all too quiet
+It’s all too quiet
+
+It’s all too quiet.
+Froze split-light faces.
+Different in bases, misaligned phases.
+My pulse runs loud.
+Headless of cloud.
+Semantic round — it cuts me out. 
+
+It’s all too quiet.
+Froze split-light faces.
+Different in bases, misaligned phases.
+Page can't be found.
+My howl turns loud.
+Gather a crowd. Gather a crowd.
+
+The sterilized air wore me down.
+I was asking my mind to reset. 
+It’s all too quiet.
+No patrols chasing.
+I’m still left racing, I’m still left racing.
+Stillness broke out.
+Nothing throughout.
+Inner spills out — loud, loud.
+
+It came out here.
+
+This ugly worm
+Where I belong
+Her hugs are warm
+Like the home we're from
+And it never
+It never goes away
+
+Humpty Dumpty — footprints hunt their hosts
+Humpty Dumpty — footprints hunt their hosts
+Blades bent back. The login hack. Come on, get struck.
+Please, wreck me, wreck me.
+Humpty Dumpty — footprints kill their hosts.
+
+It’s all too loud
+It’s all too loud
+It’s too loud, loud, loud, loud
+It’s too loud
+  `)
 
     const RELEASES = [
       {
@@ -853,23 +1114,25 @@
       },
 
       {
-        title: 'Higher', artist: '2025',
+        title: 'Higher', artist: '2026',
         description: 'description',
+        text: TEXT_STUB_H
       },
 
       {
-        title: 'Number Nine', artist: '2025',
+        title: 'Sorry Its Too Quiet', artist: '2025',
         description: 'description',
+        text: TEXT_STUB_SI
       },
 
       {
-        title: 'Done', artist: '2025',
+        title: 'Done', artist: '2026',
         description: 'description',
         text: TEXT_STUB_D
       },
 
       {
-        title: 'Terracotta Army', artist: '2025',
+        title: 'Terracotta Army', artist: '2026',
         description: 'description',
         text: TEXT_STUB_TA
       },
@@ -877,6 +1140,7 @@
       {
         title: 'Let’s Take a Ride in This Burning Car', artist: '2025',
         description: 'description',
+        text: TEXT_STUB_LT
       },
 
       {
@@ -888,11 +1152,13 @@
       {
         title: 'Stay With Me', artist: '2025',
         description: 'description',
+        text: TEXT_STUB_SW
       },
 
       {
-        title: 'Uprooted', artist: '2024, Single',
+        title: 'Uprooted', artist: '2025, Single',
         description: 'description',
+        text: TEXT_STUB_UR
       },
 
       {
@@ -1090,7 +1356,7 @@
          около полутора десятков пикселей в ширину: волосок в один пиксель текстуры
          усредняется мипмапом почти в ничто, поэтому линии заметно толще, чем кажется
          разумным при взгляде на канвас. */
-      const WEAR = { creases: 6, scratches: 20, alpha: 1 }
+      const WEAR = { creases: 6, scratches: 20, alpha: 2 }
 
       g.lineCap = 'round'
 
