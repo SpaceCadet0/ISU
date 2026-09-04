@@ -300,6 +300,7 @@
       left: 40%;
       right: 6%;
       top: 33%;
+      bottom: 6%;
       display: grid;
       grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
       gap: 44px;
@@ -311,6 +312,16 @@
     body.viewing .card-cols {
       transform: none;
       opacity: 1
+    }
+
+    /* Колонка ограничена кадром, а внутри — флекс: заголовок, артист и стрелка
+       занимают своё, а длинный текст ужимается и прокручивается. Так стрелка
+       возврата остаётся в кадре при любой длине описания и любом переносе
+       заголовка — потолок в долях экрана этого не гарантировал. */
+    .card-cols>div {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
     .r-title {
@@ -329,15 +340,32 @@
 
     .r-desc {
       margin-top: 18px;
-      max-width: 34ch;
+      /* почти во всю колонку: 55ch — это ~48 знаков в строке с учётом разрядки,
+         то есть комфортная длина строки, и на очень широком мониторе описание
+         не растягивается вслед за колонкой */
+      max-width: 55ch;
+      /* растёт по содержимому, но ужимается и прокручивается, когда места нет */
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
       text-transform: none;
       letter-spacing: .02em;
       line-height: 1.85
     }
 
+    .r-desc::-webkit-scrollbar {
+      width: 2px
+    }
+
+    .r-desc::-webkit-scrollbar-thumb {
+      background: var(--navy);
+      opacity: .3
+    }
+
     .back {
-      display: inline-block;
-      margin-top: 64px;
+      align-self: flex-start;
+      flex: 0 0 auto;
+      margin-top: 36px;
       font-size: 26px;
       line-height: 1;
       color: var(--navy);
@@ -365,7 +393,8 @@
       text-transform: none;
       letter-spacing: .02em;
       line-height: 2;
-      max-height: 46vh;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
       overscroll-behavior: contain;
       padding-right: 16px;
@@ -413,6 +442,11 @@
       nav.dots a {
         width: 16px;
         height: 16px
+      }
+
+      .card-cols>div {
+        display: block;
+        min-height: auto
       }
 
       .card-cols {
@@ -471,6 +505,8 @@
 
       .r-desc {
         max-width: none;
+        max-height: none;
+        overflow: visible;
         margin-top: 14px
       }
 
@@ -1109,61 +1145,61 @@ It’s too loud
       {
         title: 'Uprooted', artist: 'I See You',
         sleeve: '--orange', ink: '--navy',
-        description: 'description',
+        description: 'Uprooted means “torn out by the roots.” But this is not simply an album about emigration. Rather, it is a story about a period when the life you once knew has already ended, while the new one has not yet taken shape. And you don’t necessarily have to leave your city to experience that feeling.',
         text: TEXT_STUB_1
       },
 
       {
-        title: 'Higher', artist: '2026',
-        description: 'description',
+        title: 'Higher', artist: '2026, Single',
+        description: 'A song about the culture of endless productivity and self-optimization, where pain and exhaustion become normalized in the pursuit of “success.” The protagonist keeps raising the bar, competing with others and with themselves, but the goal is always slipping away, turning into a moving finish line. Ultimately, it is a song about burnout and suppressing one’s desires in the race toward an unattainable “higher and better.”',
         text: TEXT_STUB_H
       },
 
       {
-        title: 'Sorry Its Too Quiet', artist: '2025',
-        description: 'description',
+        title: 'Sorry It\'s Too Quiet', artist: '2025, Single',
+        description: 'A song about anxiety that arises not from a real threat, but from the absence of one. When everything around you is too quiet, calm, and safe, the mind begins to create anxiety on its own: looking for glitches, signs, and reasons to worry, gradually turning the internal noise up to an unbearable volume. From sterile silence, the protagonist arrives at a state where their own thoughts become the main source of danger.',
         text: TEXT_STUB_SI
       },
 
       {
-        title: 'Done', artist: '2026',
-        description: 'description',
+        title: 'Done', artist: '2026, Single',
+        description: 'A song about inherited darkness — both personal and collective. It explores how family trauma, depression, anxiety, and destructive patterns of behavior are passed down through generations, while a person tries to break free from the cycle but repeatedly finds themselves back in the same internal labyrinth. Despite moving between cities, countries, and settings — from Elmash to Rotterdam — the darkness remains, because its source is not outside but within.',
         text: TEXT_STUB_D
       },
 
       {
-        title: 'Terracotta Army', artist: '2026',
-        description: 'description',
+        title: 'Terracotta Army', artist: '2026, Single',
+        description: 'The song is dedicated to the artist Willem van Veldhuizen and is constructed from images drawn from his own paintings. It evokes places in Rotterdam associated with his life, museum halls, marble reflections, light, silence, and empty spaces — motifs that appeared repeatedly in his work. Even the refrain, “Homes and fields,” refers both to his paintings and to the literal meaning of the surname Van Veldhuizen (“homes and fields”). After the artist’s death, his world seems to continue existing within the paintings: the halls have emptied, but they have not become empty (a line from the song), and art preserves a person’s presence even after they are gone.',
         text: TEXT_STUB_TA
       },
 
       {
-        title: 'Let’s Take a Ride in This Burning Car', artist: '2025',
-        description: 'description',
+        title: 'Let’s Take a Ride in This Burning Car', artist: '2025, Single',
+        description: 'A song about the painful break with inherited generational trauma and behavioral patterns that once helped us survive but now prevent us from truly living. The image of a burning car becomes a symbol of letting go of someone else’s burden, fear, control, and the constant need to live up to expectations. It is a story about how, after passing through emptiness and losing familiar sources of stability, a person finally tries to confront their true self.',
         text: TEXT_STUB_LT
       },
 
       {
-        title: 'Alles Goed', artist: '2025',
-        description: 'description',
+        title: 'Alles Goed', artist: '2025, Single',
+        description: 'A song about the painful process of adapting to a new life and trying to convince yourself that everything is fine, even as something inside you is breaking. The refrain “Alles goed” (“everything is fine”) sounds like a mantra or an act of self-persuasion against a backdrop of demands to be successful, fit into the system, give up parts of yourself, and “blend into the brave new world.”',
         text: TEXT_STUB_AG
       },
 
       {
-        title: 'Stay With Me', artist: '2025',
-        description: 'description',
+        title: 'Stay With Me', artist: '2025, Single',
+        description: 'The song tells a story of life among the ruins of an unrealized future — a migrant experience in which the loss concerns not only a home, but also the version of oneself that might have existed. Among the ghosts of missed opportunities and a sense of dissolving identity, the protagonist clings to love and human connection as the last source of stability amid constant change. Through the growing chaos and alienation, they desperately ask to preserve their connection with those they love: “Stay with me.”',
         text: TEXT_STUB_SW
       },
 
       {
         title: 'Uprooted', artist: '2025, Single',
-        description: 'description',
+        description: 'The song uses the image of arriving at a station as a metaphor for a life transition and an attempt to rethink one’s identity. The protagonist reflects on trauma, migration, severing ties with their roots, and the feeling of being split between different cultures and generations, feeling as though they “belong” to neither side. Ultimately, it is a story about searching for oneself, accepting a complicated inheritance from the past, and striving for inner reconciliation.',
         text: TEXT_STUB_UR
       },
 
       {
-        title: 'Moving Storms', artist: '2024',
-        description: 'description',
+        title: 'Moving Storms', artist: '2024, Single',
+        description: 'A song about the first days in a new country, when the past finally begins to let go, and uncertainty brings a sense of peace and hope rather than fear. The protagonist seems to be learning how to breathe again, enjoying the unfamiliar absence of anxiety and believing that the inner storms of the past have been left behind. Despite the confusion and sense of unreality, it is a deeply hopeful perspective on the beginning of a new life.',
         text: TEXT_STUB_MS
       },
     ]
