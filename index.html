@@ -18,6 +18,9 @@
       --navy: #1D2A57;
       --red: #FC2234;
       --orange: #de9143;
+      /* выключенный звук: приглушённый, но с контрастом 3:1 к фону —
+         ниже него кнопку уже трудно заметить, а включить звук больше нечем */
+      --pale: #8792A2;
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       --serif: "Dela Gothic One", Georgia, serif;
@@ -176,8 +179,12 @@
       background: none;
       color: var(--navy);
       cursor: pointer;
-      opacity: .55;
       transition: opacity .18s ease, color .18s ease;
+    }
+
+    /* звук выключен — кнопка бледнеет */
+    .h-sound[aria-pressed="true"] {
+      color: var(--pale)
     }
 
     .h-sound svg {
@@ -212,12 +219,10 @@
     }
 
     .h-sound:hover {
-      opacity: 1;
-      color: var(--red)
+      opacity: .7
     }
 
     .h-sound:focus-visible {
-      opacity: 1;
       outline: 2px solid var(--red);
       outline-offset: 3px;
       border-radius: 3px;
@@ -495,12 +500,27 @@
 
       /* Шапка на узком экране схлопывается до одной марки, и лишний ряд в ней
          сдвинул бы крупный план вниз. Поэтому кнопка звука уходит из потока
-         шапки в нижний левый угол — точки стоят по центру, места хватает. */
+         шапки в нижний правый угол.
+
+         Отступ снизу подогнан под точки: они стоят на 20px от края при высоте
+         16px, то есть их центр — на 28px. Кнопка высотой 26px даёт тот же центр
+         при отступе 15px. Держи эти числа парой: сдвинешь точки — уедет и она. */
       .h-right {
         position: fixed;
-        left: 18px;
-        bottom: 18px;
+        left: auto;
+        right: 18px;
+        bottom: 15px;
         gap: 0;
+        transition: opacity .35s ease, visibility .35s;
+      }
+
+      /* появляется вместе с точками: на первом экране её нет, и в карточке —
+         тоже, иначе повисла бы поверх шторки с текстом */
+      body.intro .h-right,
+      body.viewing .h-right {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
       }
 
       .brand {
