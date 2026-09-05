@@ -159,8 +159,71 @@
 
     /* подпись справа — внешняя ссылка, ведёт себя кнопкой:
        палец на курсоре, отклик на наведение, своё кольцо фокуса */
-    .h-sign {
+    .h-right {
       justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .h-sound {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--navy);
+      cursor: pointer;
+      opacity: .55;
+      transition: opacity .18s ease, color .18s ease;
+    }
+
+    .h-sound svg {
+      width: 18px;
+      height: 16px;
+      display: block;
+    }
+
+    .h-sound .s-body {
+      fill: currentColor
+    }
+
+    .h-sound .s-wave,
+    .h-sound .s-off {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+    }
+
+    .h-sound .s-off {
+      display: none
+    }
+
+    /* нажатая кнопка = звук выключен: волны прячем, крестик показываем */
+    .h-sound[aria-pressed="true"] .s-wave {
+      display: none
+    }
+
+    .h-sound[aria-pressed="true"] .s-off {
+      display: block
+    }
+
+    .h-sound:hover {
+      opacity: 1;
+      color: var(--red)
+    }
+
+    .h-sound:focus-visible {
+      opacity: 1;
+      outline: 2px solid var(--red);
+      outline-offset: 3px;
+      border-radius: 3px;
+    }
+
+    .h-sign {
       text-align: right;
       max-width: 22ch;
       color: var(--navy);
@@ -430,6 +493,16 @@
         display: none
       }
 
+      /* Шапка на узком экране схлопывается до одной марки, и лишний ряд в ней
+         сдвинул бы крупный план вниз. Поэтому кнопка звука уходит из потока
+         шапки в нижний левый угол — точки стоят по центру, места хватает. */
+      .h-right {
+        position: fixed;
+        left: 18px;
+        bottom: 18px;
+        gap: 0;
+      }
+
       .brand {
         font-size: 30px
       }
@@ -602,7 +675,16 @@
   <header>
     <div class="h-note mono" id="h-note"></div>
     <div class="brand" id="h-brand"></div>
-    <a class="h-sign mono" id="h-sign" target="_blank" rel="noopener noreferrer"></a>
+    <div class="h-right">
+      <button class="h-sound" id="h-sound" aria-pressed="false" aria-label="Turn sound off">
+        <svg viewBox="0 0 18 16" aria-hidden="true" focusable="false">
+          <path class="s-body" d="M3 6h2.6L9.4 2.6v10.8L5.6 10H3z" />
+          <path class="s-wave" d="M12 5.6a3.7 3.7 0 0 1 0 4.8M14.2 3.6a6.5 6.5 0 0 1 0 8.8" />
+          <path class="s-off" d="M12.2 5.8l4 4.4M16.2 5.8l-4 4.4" />
+        </svg>
+      </button>
+      <a class="h-sign mono" id="h-sign" target="_blank" rel="noopener noreferrer"></a>
+    </div>
   </header>
 
   <button class="shelf" id="shelf" aria-label="Open the collection">
@@ -630,6 +712,8 @@
     <p class="mono" id="fb-why"></p>
     <div class="fb-grid" id="fb-grid"></div>
   </div>
+
+  <audio id="track" src="station-den-haag-centraal.mp3" preload="auto"></audio>
 
   <p class="vh" id="live" role="status" aria-live="polite"></p>
   <section class="vh" id="catalog" aria-label="Collection"></section>
@@ -1779,6 +1863,76 @@ It’s too loud
        ============================================================ */
 
     let last = performance.now()
+
+    /* ============================================================
+       звук
+       ============================================================ */
+
+    /* Ручки: через сколько после загрузки пробовать, до какой громкости
+       и за сколько её набирать. */
+    const AUDIO = { delay: 2000, volume: 0.55, fade: 800 }
+
+    /* сам элемент лежит в разметке: так дорожка видна в отладчике и её состояние
+       можно проверить, а не только услышать */
+    const audio = document.getElementById('track')
+    audio.loop = false
+    audio.volume = 0
+
+    let soundOff = false
+    let armed = false
+
+    /* Нарастание на setInterval, а не на кадрах анимации: в фоновой вкладке
+       звук продолжает идти, а requestAnimationFrame останавливается — громкость
+       застыла бы на нуле. */
+    function fadeIn() {
+      const t0 = Date.now()
+      const id = setInterval(() => {
+        if (soundOff) { clearInterval(id); return }
+        const k = Math.min((Date.now() - t0) / AUDIO.fade, 1)
+        audio.volume = AUDIO.volume * k
+        if (k >= 1) clearInterval(id)
+      }, 40)
+    }
+
+    /* Первое действие посетителя снимает запрет на звук. Слушаем в фазе
+       перехвата, чтобы клик по полке засчитался раньше своего обработчика. */
+    function armFirstGesture() {
+      if (armed) return
+      armed = true
+      const events = ['pointerdown', 'keydown', 'touchstart']
+      const go = () => {
+        for (const e of events) removeEventListener(e, go, true)
+        armed = false
+        startSound()
+      }
+      for (const e of events) addEventListener(e, go, true)
+    }
+
+    async function startSound() {
+      if (soundOff) return
+      try {
+        await audio.play()
+        if (audio.volume === 0) fadeIn()
+      } catch {
+        /* автозапуск без жеста запрещён почти везде — ждём первого действия */
+        armFirstGesture()
+      }
+    }
+
+    {
+      const btn = document.getElementById('h-sound')
+
+      const apply = off => {
+        soundOff = off
+        btn.setAttribute('aria-pressed', String(off))
+        btn.setAttribute('aria-label', off ? 'Turn sound on' : 'Turn sound off')
+        if (off) audio.pause()
+        else startSound()
+      }
+
+      btn.addEventListener('click', () => apply(!soundOff))
+      setTimeout(startSound, AUDIO.delay)
+    }
 
     /* ============================================================
        вступление — полка, из которой выезжает веер
