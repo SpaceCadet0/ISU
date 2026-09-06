@@ -23,7 +23,7 @@
       --pale: #8792A2;
       --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      --serif: "Dela Gothic One", Georgia, serif;
+      --display: "Dela Gothic One", Georgia, serif;
     }
 
     * {
@@ -260,7 +260,7 @@
     }
 
     .brand {
-      font-family: var(--serif);
+      font-family: var(--display);
       text-transform: uppercase;
       font-size: 30px;
       line-height: 1;
@@ -393,11 +393,15 @@
     }
 
     .r-title {
-      font-family: var(--sans);
-      font-weight: 800;
-      font-size: clamp(30px, 3.2vw, 46px);
-      line-height: 1.02;
-      letter-spacing: -.02em;
+      font-family: var(--display);
+      /* у Dela Gothic One одно начертание: 800 дал бы синтетический жир,
+         который гарнитура рисует грубее собственного */
+      font-weight: 400;
+      /* капс набирает ширину и зрительно крупнее строчных — кегль соответственно ниже */
+      text-transform: uppercase;
+      font-size: clamp(21px, 2.3vw, 33px);
+      line-height: 1.16;
+      letter-spacing: 0;
       color: var(--navy);
       text-wrap: balance;
     }
@@ -593,7 +597,7 @@
       }
 
       .r-title {
-        font-size: 28px
+        font-size: 21px
       }
 
       .r-desc {
@@ -618,6 +622,40 @@
         padding-right: 0;
         line-height: 1.9
       }
+    }
+
+    /* ---------- обложка во весь экран ---------- */
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      /* тот же #F7FBFF, но полупрозрачный: сцена за ним размывается, а не гаснет */
+      background: rgba(247, 251, 255, .62);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      transition: opacity .35s ease;
+      cursor: zoom-out;
+    }
+
+    .lightbox.on {
+      opacity: 1
+    }
+
+    .lightbox img {
+      position: fixed;
+      display: block;
+      /* растём от левого верхнего угла: так перенос в миниатюру считается
+         одним translate + scale, без поправок на центр */
+      transform-origin: top left;
+      will-change: transform;
+      cursor: default;
+      box-shadow: 0 40px 90px rgba(29, 42, 87, .22);
+    }
+
+    body.viewing canvas#stage.over-cover {
+      cursor: zoom-in
     }
 
     /* ---------- запасная сетка ---------- */
@@ -731,6 +769,11 @@
   <div class="fallback" id="fallback">
     <p class="mono" id="fb-why"></p>
     <div class="fb-grid" id="fb-grid"></div>
+  </div>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Album cover" tabindex="-1"
+    hidden>
+    <img id="lb-img" alt="">
   </div>
 
   <audio id="track" src="station-den-haag-centraal.mp3" preload="auto"></audio>
@@ -1885,6 +1928,96 @@ It’s too loud
     let last = performance.now()
 
     /* ============================================================
+       обложка во весь экран
+       ============================================================ */
+
+    const LB = { open: 0.42, close: 0.34, fill: 0.82 }   // секунды и доля кадра
+
+    const lb = document.getElementById('lightbox')
+    const lbImg = document.getElementById('lb-img')
+    let lbOn = false
+
+    /* Экранный прямоугольник обложки. Считается проекцией углов самой грани,
+       а не по формулам крупного плана: работает при любом его положении,
+       размере и на любом кадре анимации. */
+    function coverRect() {
+      const m = hero.s.mesh
+      m.updateWorldMatrix(true, false)
+      const v = new THREE.Vector3()
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity
+      for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
+        v.set(sx * SLEEVE / 2, sy * SLEEVE / 2, THICK / 2)
+          .applyMatrix4(m.matrixWorld).project(camera)
+        const px = (v.x * 0.5 + 0.5) * innerWidth
+        const py = (0.5 - v.y * 0.5) * innerHeight
+        x0 = Math.min(x0, px); x1 = Math.max(x1, px)
+        y0 = Math.min(y0, py); y1 = Math.max(y1, py)
+      }
+      return { left: x0, top: y0, size: Math.min(x1 - x0, y1 - y0) }
+    }
+
+    function lbTarget() {
+      const size = Math.min(innerWidth, innerHeight) * LB.fill
+      return { left: (innerWidth - size) / 2, top: (innerHeight - size) / 2, size }
+    }
+
+    function lbPlace() {
+      const b = lbTarget()
+      lbImg.style.left = b.left + 'px'
+      lbImg.style.top = b.top + 'px'
+      lbImg.style.width = b.size + 'px'
+      lbImg.style.height = b.size + 'px'
+    }
+
+    /* перенос из раскрытого положения обратно в миниатюру */
+    function lbToCover() {
+      const a = coverRect(), b = lbTarget()
+      return `translate(${(a.left - b.left).toFixed(2)}px, ${(a.top - b.top).toFixed(2)}px)`
+        + ` scale(${(a.size / b.size).toFixed(5)})`
+    }
+
+    function openLightbox() {
+      if (lbOn || mode !== 'card' || hero.release < 0) return
+      lbOn = true
+
+      lbImg.src = `covers/${hero.release + 1}.jpg`
+      lbImg.alt = RELEASES[hero.release].title
+      lbPlace()
+
+      lb.hidden = false
+      lbImg.style.transition = 'none'
+      lbImg.style.transform = lbToCover()
+
+      if (reduced) {
+        lb.classList.add('on')
+        lbImg.style.transform = 'none'
+      } else {
+        /* два кадра: в первом браузер принимает стартовый transform, во втором
+           начинается переход. В одном кадре смена значений схлопнулась бы. */
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (!lbOn) return
+          lb.classList.add('on')
+          lbImg.style.transition = `transform ${LB.open}s cubic-bezier(.2,.7,.3,1)`
+          lbImg.style.transform = 'none'
+        }))
+      }
+      lb.focus({ preventScroll: true })
+    }
+
+    function closeLightbox() {
+      if (!lbOn) return
+      lbOn = false
+      lb.classList.remove('on')
+      lbImg.style.transition = reduced ? 'none' : `transform ${LB.close}s cubic-bezier(.4,0,.6,1)`
+      lbImg.style.transform = lbToCover()
+      setTimeout(() => { if (!lbOn) lb.hidden = true }, reduced ? 0 : LB.close * 1000)
+      document.getElementById('card').focus({ preventScroll: true })
+    }
+
+    /* закрывает клик мимо картинки — по самой картинке ничего не происходит */
+    lb.addEventListener('click', ev => { if (ev.target !== lbImg) closeLightbox() })
+
+    /* ============================================================
        звук
        ============================================================ */
 
@@ -2084,6 +2217,8 @@ It’s too loud
 
       /* точка выхода веера считается от экранного положения полки */
       if (mode === 'entering') measureSlot()
+
+      if (lbOn) lbPlace()
     }
     new ResizeObserver(resize).observe(document.documentElement)
     addEventListener('resize', resize)
@@ -2130,6 +2265,15 @@ It’s too loud
     })
 
     canvas.addEventListener('pointermove', ev => {
+      if (mode === 'card') {
+        /* без подсказки курсором никто не догадается, что обложка кликабельна */
+        ray.setFromCamera(
+          new THREE.Vector2((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1),
+          camera)
+        canvas.classList.toggle('over-cover', !lbOn && !!ray.intersectObject(hero.s.mesh, true).length)
+        return
+      }
+      canvas.classList.remove('over-cover')
       if (mode !== 'fan') return
 
       if (dragging) {
@@ -2164,17 +2308,22 @@ It’s too loud
       canvas.classList.remove('over-sleeve')
     })
 
-    /* клик по полю вокруг обложки закрывает карточку */
+    /* по обложке — раскрыть её во весь экран, мимо — закрыть карточку */
     canvas.addEventListener('click', ev => {
-      if (mode !== 'card') return
+      if (mode !== 'card' || lbOn) return
       ray.setFromCamera(
         new THREE.Vector2((ev.clientX / innerWidth) * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1),
         camera)
-      if (!ray.intersectObject(hero.s.mesh, true).length) closeCard()
+      if (ray.intersectObject(hero.s.mesh, true).length) openLightbox()
+      else closeCard()
     })
 
     addEventListener('keydown', ev => {
-      if (ev.key === 'Escape' && (mode === 'card' || mode === 'opening')) closeCard()
+      if (ev.key === 'Escape') {
+        /* сначала закрывается то, что открыто последним */
+        if (lbOn) { closeLightbox(); return }
+        if (mode === 'card' || mode === 'opening') closeCard()
+      }
       if (mode !== 'fan') return
       if (ev.key === 'ArrowRight') { scrollTarget = Math.round(scrollTarget) + 1; ev.preventDefault() }
       if (ev.key === 'ArrowLeft') { scrollTarget = Math.round(scrollTarget) - 1; ev.preventDefault() }
