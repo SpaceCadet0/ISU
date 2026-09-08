@@ -5,6 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>I See You — Uprooted, 2026</title>
+  <!-- Пути относительные, без ведущего слэша: сайт лежит не в корне домена,
+       а в /ISU/, и «/favicon-32x32.png» указывал бы мимо проекта. -->
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet">
@@ -147,7 +154,10 @@
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: start;
-      gap: 24px;
+      /* межколоночный зазор нужен, межстрочный — нет: «собачка» стоит второй
+         строкой сетки, и общий gap отбивал бы её от подписи на все 24px */
+      column-gap: 24px;
+      row-gap: 0;
       padding: 26px 32px;
       pointer-events: none;
     }
@@ -167,6 +177,46 @@
       display: flex;
       align-items: center;
       gap: 18px;
+    }
+
+    /* «собачка» под подписью, по правому краю шапки */
+    .h-at,
+    .card-at {
+      font-family: var(--mono);
+      font-size: 17px;
+      line-height: 1;
+      color: var(--navy);
+      text-decoration: none;
+      transition: color .18s ease;
+    }
+
+    .h-at:hover,
+    .card-at:hover {
+      color: var(--red)
+    }
+
+    .h-at:focus-visible,
+    .card-at:focus-visible {
+      color: var(--red);
+      outline: 2px solid var(--red);
+      outline-offset: 4px;
+      border-radius: 2px;
+    }
+
+    .h-at {
+      grid-column: 3;
+      justify-self: end;
+      margin-top: 2px;
+    }
+
+    /* в карточке «собачка» появляется только на узком экране — там, где
+       шапочная подпись скрыта; на широком её роль играет шапочная */
+    .card-foot {
+      display: contents
+    }
+
+    .card-at {
+      display: none
     }
 
     .h-sound {
@@ -504,6 +554,24 @@
         display: none
       }
 
+      .h-at {
+        display: none
+      }
+
+      /* Listen слева, «собачка» справа — по нижнему краю, чтобы знак встал
+         на строку подписи, а не на черту над ней */
+      .card-foot {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .card-at {
+        display: block;
+        padding-bottom: 2px;
+      }
+
       /* Шапка на узком экране схлопывается до одной марки, и лишний ряд в ней
          сдвинул бы крупный план вниз. Поэтому кнопка звука уходит из потока
          шапки в нижний правый угол.
@@ -745,6 +813,8 @@
       </button>
       <a class="h-sign mono" id="h-sign" target="_blank" rel="noopener noreferrer"></a>
     </div>
+    <a class="h-at" href="https://taplink.cc/iseeyouband" target="_blank" rel="noopener noreferrer"
+      aria-label="All links">@</a>
   </header>
 
   <button class="shelf" id="shelf" aria-label="Open the collection">
@@ -763,7 +833,11 @@
       </div>
       <div>
         <div class="lyrics mono" id="c-text" tabindex="0"></div>
-        <a class="card-listen mono" id="c-listen" target="_blank" rel="noopener noreferrer"></a>
+        <div class="card-foot">
+          <a class="card-listen mono" id="c-listen" target="_blank" rel="noopener noreferrer"></a>
+          <a class="card-at" href="https://taplink.cc/iseeyouband" target="_blank" rel="noopener noreferrer"
+            aria-label="All links">@</a>
+        </div>
       </div>
     </div>
   </div>
@@ -1292,7 +1366,7 @@ It’s too loud
 
     const RELEASES = [
       {
-        title: 'Uprooted', artist: 'I See You',
+        title: 'Uprooted', artist: '2026',
         sleeve: '--orange', ink: '--navy',
         description: 'Uprooted means “torn out by the roots.” But this is not simply an album about emigration. Rather, it is a story about a period when the life you once knew has already ended, while the new one has not yet taken shape. And you don’t necessarily have to leave your city to experience that feeling.',
         text: TEXT_STUB_1
