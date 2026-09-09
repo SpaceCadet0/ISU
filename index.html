@@ -180,8 +180,7 @@
     }
 
     /* «собачка» под подписью, по правому краю шапки */
-    .h-at,
-    .card-at {
+    .h-at {
       font-family: var(--mono);
       font-size: 17px;
       line-height: 1;
@@ -190,13 +189,11 @@
       transition: color .18s ease;
     }
 
-    .h-at:hover,
-    .card-at:hover {
+    .h-at:hover {
       color: var(--red)
     }
 
-    .h-at:focus-visible,
-    .card-at:focus-visible {
+    .h-at:focus-visible {
       color: var(--red);
       outline: 2px solid var(--red);
       outline-offset: 4px;
@@ -209,15 +206,7 @@
       margin-top: 2px;
     }
 
-    /* в карточке «собачка» появляется только на узком экране — там, где
-       шапочная подпись скрыта; на широком её роль играет шапочная */
-    .card-foot {
-      display: contents
-    }
 
-    .card-at {
-      display: none
-    }
 
     .h-sound {
       display: grid;
@@ -554,27 +543,23 @@
         display: none
       }
 
+      /* «Собачка» уходит из потока шапки в верхний правый угол и висит там
+         с первого экрана. Отступ сверху подогнан под марку: та стоит на 20px
+         при кегле 30px, её середина — на 35px; знак высотой 17px даёт ту же
+         середину при отступе 26px. */
       .h-at {
-        display: none
-      }
-
-      /* Listen слева, «собачка» справа — по нижнему краю, чтобы знак встал
-         на строку подписи, а не на черту над ней */
-      .card-foot {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 20px;
-      }
-
-      .card-at {
         display: block;
-        padding-bottom: 2px;
+        position: fixed;
+        top: 26px;
+        right: 18px;
+        margin-top: 0;
+        grid-column: auto;
+        justify-self: auto;
       }
 
-      /* Шапка на узком экране схлопывается до одной марки, и лишний ряд в ней
-         сдвинул бы крупный план вниз. Поэтому кнопка звука уходит из потока
-         шапки в нижний правый угол.
+      /* Кнопка звука тоже уходит из потока — лишний ряд в схлопнутой шапке
+         сдвинул бы крупный план вниз, — и видна всегда, включая первый экран
+         и раскрытую карточку.
 
          Отступ снизу подогнан под точки: они стоят на 20px от края при высоте
          16px, то есть их центр — на 28px. Кнопка высотой 26px даёт тот же центр
@@ -585,16 +570,17 @@
         right: 18px;
         bottom: 15px;
         gap: 0;
-        transition: opacity .35s ease, visibility .35s;
       }
 
-      /* появляется вместе с точками: на первом экране её нет, и в карточке —
-         тоже, иначе повисла бы поверх шторки с текстом */
-      body.intro .h-right,
+      /* Поверх шторки под кнопкой лежит подложка цветом фона: сама шторка того
+         же цвета, поэтому подложки не видно, но строки текста под кнопку не
+         подлезают. На витрине подложки нет — там она была бы светлым пятном
+         поверх конвертов. */
       body.viewing .h-right {
-        opacity: 0;
-        visibility: hidden;
-        pointer-events: none;
+        background: var(--bg);
+        border-radius: 50%;
+        padding: 3px;
+        margin: -3px;
       }
 
       .brand {
@@ -833,11 +819,7 @@
       </div>
       <div>
         <div class="lyrics mono" id="c-text" tabindex="0"></div>
-        <div class="card-foot">
-          <a class="card-listen mono" id="c-listen" target="_blank" rel="noopener noreferrer"></a>
-          <a class="card-at" href="https://taplink.cc/iseeyouband" target="_blank" rel="noopener noreferrer"
-            aria-label="All links">@</a>
-        </div>
+        <a class="card-listen mono" id="c-listen" target="_blank" rel="noopener noreferrer"></a>
       </div>
     </div>
   </div>
